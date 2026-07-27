@@ -96,6 +96,18 @@ The command runs the type check and generates static files in `dist/`. To inspec
 npm run preview
 ```
 
+## GitHub Pages deployment
+
+The repository includes `.github/workflows/deploy-pages.yml`. Every push to `main` installs dependencies, builds the application, and publishes only the generated `dist/` directory.
+
+In the GitHub repository, open **Settings → Pages** and set **Source** to **GitHub Actions**. The project is then available at:
+
+```text
+https://gustavommcv.github.io/JSON-Visual-Editor/
+```
+
+The Vite `base` is configured for the `/JSON-Visual-Editor/` project path. If the site later moves to a custom domain or to the root repository `gustavommcv.github.io`, change `base` back to `/`.
+
 ## Dependencies
 
 - `vue`: the only runtime dependency, used for components and reactive interface state;
