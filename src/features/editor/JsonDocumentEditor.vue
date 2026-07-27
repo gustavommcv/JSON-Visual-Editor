@@ -205,6 +205,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
           :path="[]"
           :depth="0"
           :highlighted-path="highlightedPath"
+          :image-previews="true"
           @operation="emit('operation', $event)"
         />
       </div>
