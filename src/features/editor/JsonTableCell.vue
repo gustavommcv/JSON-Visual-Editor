@@ -48,24 +48,24 @@ function onNullTypeChange(event: Event): void {
       v-if="nestedSummary"
       class="nested-cell-summary"
       type="button"
-      :aria-label="`${label}: ${nestedSummary}. Abrir detalhes do item`"
+      :aria-label="`${label}: ${nestedSummary}. Open item details`"
       @click="emit('openDetails')"
     >
       <span aria-hidden="true">{{ Array.isArray(value) ? '[ ]' : '{ }' }}</span>
       <strong>{{ nestedSummary }}</strong>
-      <small>Abrir item</small>
+      <small>Open item</small>
     </button>
 
     <div v-else-if="value === null" class="table-null-cell">
       <code>null</code>
       <label>
-        <span class="visually-hidden">Alterar tipo de {{ label }}</span>
+        <span class="visually-hidden">Change the type of {{ label }}</span>
         <select value="null" @change="onNullTypeChange">
-          <option value="null">Nulo</option>
-          <option value="string">Texto</option>
-          <option value="number">Número</option>
-          <option value="boolean">Booleano</option>
-          <option value="object">Objeto</option>
+          <option value="null">Null</option>
+          <option value="string">String</option>
+          <option value="number">Number</option>
+          <option value="boolean">Boolean</option>
+          <option value="object">Object</option>
           <option value="array">Array</option>
         </select>
       </label>

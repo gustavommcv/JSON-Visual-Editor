@@ -49,11 +49,11 @@ export function useJsonDocument() {
     return !areJsonSnapshotsEqual(document.value.current, lastExported.value)
   })
   const exportError = computed(() =>
-    document.value ? getJsonExportError(document.value.current) : 'Nenhum documento foi carregado.',
+    document.value ? getJsonExportError(document.value.current) : 'No document has been loaded.',
   )
   const canExport = computed(() => exportError.value === null)
   const suggestedFileName = computed(() =>
-    document.value ? getEditedJsonDownloadName(document.value.fileName) : 'documento-editado.json',
+    document.value ? getEditedJsonDownloadName(document.value.fileName) : 'document-edited.json',
   )
 
   function syncCurrentFromHistory(): void {
@@ -73,7 +73,7 @@ export function useJsonDocument() {
     errorMessage.value = null
 
     if (!JSON_FILE_EXTENSION.test(file.name)) {
-      errorMessage.value = 'Escolha um arquivo com a extensão .json.'
+      errorMessage.value = 'Choose a file with the .json extension.'
       return false
     }
 
@@ -98,7 +98,7 @@ export function useJsonDocument() {
       operationError.value = null
       return true
     } catch {
-      errorMessage.value = 'Não foi possível ler o arquivo. Tente selecioná-lo novamente.'
+      errorMessage.value = 'The file could not be read. Try choosing it again.'
       return false
     } finally {
       isImporting.value = false

@@ -18,75 +18,75 @@ interface OperationCase {
 
 const operationCases: OperationCase[] = [
   {
-    label: 'edição',
-    initial: { nome: 'antes' },
-    operation: { kind: 'set-value', path: ['nome'], value: 'depois' },
-    expected: { nome: 'depois' },
+    label: 'editing',
+    initial: { name: 'before' },
+    operation: { kind: 'set-value', path: ['name'], value: 'after' },
+    expected: { name: 'after' },
   },
   {
-    label: 'alteração de tipo',
-    initial: { valor: null },
-    operation: { kind: 'change-type', path: ['valor'], valueType: 'array' },
-    expected: { valor: [] },
+    label: 'type change',
+    initial: { value: null },
+    operation: { kind: 'change-type', path: ['value'], valueType: 'array' },
+    expected: { value: [] },
   },
   {
-    label: 'criação de propriedade',
+    label: 'property creation',
     initial: {},
-    operation: { kind: 'add-property', objectPath: [], key: 'ativo', valueType: 'boolean' },
-    expected: { ativo: false },
+    operation: { kind: 'add-property', objectPath: [], key: 'active', valueType: 'boolean' },
+    expected: { active: false },
   },
   {
-    label: 'criação de item',
+    label: 'item creation',
     initial: [],
     operation: { kind: 'append-item', arrayPath: [], valueType: 'number' },
     expected: [0],
   },
   {
-    label: 'duplicação de item',
-    initial: [{ aninhado: ['a'] }],
+    label: 'item duplication',
+    initial: [{ nested: ['a'] }],
     operation: { kind: 'duplicate-array-item', arrayPath: [], index: 0 },
-    expected: [{ aninhado: ['a'] }, { aninhado: ['a'] }],
+    expected: [{ nested: ['a'] }, { nested: ['a'] }],
   },
   {
-    label: 'duplicação de propriedade',
-    initial: { perfil: { ativo: true } },
-    operation: { kind: 'duplicate-property', objectPath: [], key: 'perfil' },
-    expected: { perfil: { ativo: true }, 'perfil (cópia)': { ativo: true } },
+    label: 'property duplication',
+    initial: { profile: { active: true } },
+    operation: { kind: 'duplicate-property', objectPath: [], key: 'profile' },
+    expected: { profile: { active: true }, 'profile (copy)': { active: true } },
   },
   {
-    label: 'exclusão',
+    label: 'deletion',
     initial: { a: 1, b: 2 },
     operation: { kind: 'remove-value', path: ['a'] },
     expected: { b: 2 },
   },
   {
-    label: 'renomeação',
-    initial: { nome: 'Ada' },
-    operation: { kind: 'rename-property', objectPath: [], previousKey: 'nome', nextKey: 'pessoa' },
-    expected: { pessoa: 'Ada' },
+    label: 'renaming',
+    initial: { name: 'Ada' },
+    operation: { kind: 'rename-property', objectPath: [], previousKey: 'name', nextKey: 'person' },
+    expected: { person: 'Ada' },
   },
   {
-    label: 'reordenação de array',
+    label: 'array reordering',
     initial: ['a', 'b', 'c'],
     operation: { kind: 'move-array-item', arrayPath: [], fromIndex: 2, toIndex: 0 },
     expected: ['c', 'a', 'b'],
   },
   {
-    label: 'reordenação de objeto',
+    label: 'object reordering',
     initial: { a: 1, b: 2 },
     operation: { kind: 'move-property', objectPath: [], key: 'b', toIndex: 0 },
     expected: { b: 2, a: 1 },
   },
   {
-    label: 'substituição da raiz',
-    initial: { antes: true },
-    operation: { kind: 'replace-root', value: ['agora'] },
-    expected: ['agora'],
+    label: 'root replacement',
+    initial: { before: true },
+    operation: { kind: 'replace-root', value: ['now'] },
+    expected: ['now'],
   },
 ]
 
-describe('histórico de snapshots JSON', () => {
-  it.each(operationCases)('desfaz e refaz $label', ({ initial, operation, expected }) => {
+describe('JSON snapshot history', () => {
+  it.each(operationCases)('undoes and redoes $label', ({ initial, operation, expected }) => {
     const operationResult = applyJsonOperation(initial, operation)
     expect(operationResult.ok).toBe(true)
     if (!operationResult.ok) return
@@ -102,7 +102,7 @@ describe('histórico de snapshots JSON', () => {
     expect(redone.present).toEqual(expected)
   })
 
-  it('descarta a pilha de refazer quando uma nova edição é criada', () => {
+  it('discards the redo stack after a new edit', () => {
     const first = commitJsonHistory(createJsonHistory(0), 1)
     const second = commitJsonHistory(first, 2)
     const undone = undoJsonHistory(second)
@@ -113,7 +113,7 @@ describe('histórico de snapshots JSON', () => {
     expect(redoJsonHistory(branched)).toBe(branched)
   })
 
-  it('limita o consumo da pilha e mantém os snapshots mais recentes', () => {
+  it('limits stack usage and keeps the most recent snapshots', () => {
     let history = createJsonHistory(0, 3)
     for (let value = 1; value <= 5; value += 1) {
       history = commitJsonHistory(history, value)
@@ -127,25 +127,25 @@ describe('histórico de snapshots JSON', () => {
     expect(undoJsonHistory(history)).toBe(history)
   })
 
-  it('agrupa digitação contínua no mesmo campo em uma única etapa', () => {
-    let history = createJsonHistory({ texto: '' })
-    history = commitJsonHistory(history, { texto: 'a' }, { groupKey: 'text:["texto"]', timestamp: 0 })
-    history = commitJsonHistory(history, { texto: 'ab' }, { groupKey: 'text:["texto"]', timestamp: 200 })
-    history = commitJsonHistory(history, { texto: 'abc' }, { groupKey: 'text:["texto"]', timestamp: 500 })
+  it('groups continuous typing in the same field into one step', () => {
+    let history = createJsonHistory({ text: '' })
+    history = commitJsonHistory(history, { text: 'a' }, { groupKey: 'text:["text"]', timestamp: 0 })
+    history = commitJsonHistory(history, { text: 'ab' }, { groupKey: 'text:["text"]', timestamp: 200 })
+    history = commitJsonHistory(history, { text: 'abc' }, { groupKey: 'text:["text"]', timestamp: 500 })
 
     expect(history.past).toHaveLength(1)
-    expect(undoJsonHistory(history).present).toEqual({ texto: '' })
+    expect(undoJsonHistory(history).present).toEqual({ text: '' })
 
-    const expired = commitJsonHistory(history, { texto: 'abcd' }, {
-      groupKey: 'text:["texto"]',
+    const expired = commitJsonHistory(history, { text: 'abcd' }, {
+      groupKey: 'text:["text"]',
       timestamp: 2_000,
     })
     expect(expired.past).toHaveLength(2)
   })
 
-  it('restaura o original por snapshot completo e permite desfazer a restauração', () => {
-    const original: JsonValue = { dados: [{ nome: 'A' }], ativo: true }
-    const edited: JsonValue = { dados: [{ nome: 'B' }, { nome: 'C' }], ativo: false }
+  it('restores the original from a full snapshot and allows undoing the restoration', () => {
+    const original: JsonValue = { data: [{ name: 'A' }], active: true }
+    const edited: JsonValue = { data: [{ name: 'B' }, { name: 'C' }], active: false }
     const history = commitJsonHistory(createJsonHistory(original), edited)
     const restored = commitJsonHistory(history, original)
 

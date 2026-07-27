@@ -1,54 +1,78 @@
 # JSON Visual Editor
 
-Aplicação web genérica para importar, compreender, editar, comparar e exportar documentos JSON sem trabalhar diretamente com a sintaxe. O documento é processado localmente e permanece na memória da aba.
+A generic web application for importing, understanding, editing, comparing, and exporting JSON documents without working directly with JSON syntax. The document is processed locally and stays in the memory of the current browser tab.
 
-O estado final e as decisões do produto estão detalhados em [`docs/MVP.md`](docs/MVP.md).
+The final MVP scope and product decisions are documented in [`docs/MVP.md`](docs/MVP.md).
 
-## Recursos
+## Features
 
-- importação de um arquivo `.json` por clique ou arrastar e soltar;
-- suporte a objetos, arrays, strings, números, booleanos e `null`, inclusive na raiz;
-- editor recursivo com breadcrumb, recolhimento de estruturas e área própria de rolagem;
-- formulário para objetos, lista para arrays simples, tabela para arrays de objetos semelhantes e árvore para estruturas irregulares;
-- troca manual entre todas as visualizações compatíveis;
-- criação, edição, alteração de tipo, renomeação, duplicação profunda, exclusão e reordenação;
-- tabela com união estável de colunas, células ausentes, resumos aninhados e painel de detalhes;
-- cards responsivos para tabelas em telas estreitas;
-- busca global por chave, valor e caminho, com navegação e destaque sem mutar os dados;
-- pré-visualização heurística e contida de imagens, com fallback de carregamento;
-- histórico com desfazer, refazer e restauração reversível do original;
-- comparação estrutural com adições, remoções, alterações e reordenações de arrays;
-- exportação formatada com dois espaços ou compacta;
-- indicação de alterações ainda não exportadas;
-- mensagens acessíveis, foco visível, controles rotulados e diálogos com foco contido e restaurado.
+- import one `.json` file by clicking or dragging and dropping;
+- edit objects, arrays, strings, numbers, booleans, and `null`, including at the root;
+- navigate a recursive editor with breadcrumbs, collapsible structures, and an independently scrolling workspace;
+- use a form for objects, a list for simple arrays, a table for similar objects, and a tree for irregular structures;
+- switch manually between compatible views;
+- create, edit, change type, rename, deeply duplicate, delete, and reorder values;
+- use a table with a stable union of columns, missing cells, nested summaries, and item details;
+- use responsive cards instead of a table on narrow screens;
+- search globally by property, value, or path and navigate to a highlighted result without changing the document;
+- preview likely image values safely within the layout;
+- undo, redo, and restore the original document;
+- compare additions, removals, changes, and array reordering structurally;
+- download formatted two-space JSON or compact JSON;
+- see whether the current document has changes that have not been downloaded;
+- use accessible messages, visible focus, labelled controls, and dialogs with contained and restored focus.
 
-## Privacidade
+## Terminology
 
-O arquivo não é enviado para um servidor, banco de dados ou serviço de análise. Importação, edição, histórico, busca, comparação e exportação acontecem no navegador. Ao fechar ou recarregar a aba, o estado não salvo em arquivo é perdido.
+Application-owned text follows these terms consistently:
 
-A única exceção possível de tráfego externo é a pré-visualização de uma URL remota que já exista no JSON. Nesse caso, o navegador solicita diretamente a imagem ao host indicado; o documento JSON não é enviado. O aplicativo não faz proxy, upload nem download automático dessas imagens.
+| Concept | Required term |
+|---|---|
+| Imported content | File |
+| JSON being edited | Document |
+| Object member | Property |
+| JSON content at a path | Value |
+| JSON map | Object |
+| Ordered JSON collection | Array |
+| Differences from the original | Changes |
+| Reverse the last operation | Undo |
+| Reapply a reversed operation | Redo |
+| Return to imported content | Restore original |
+| Inspect differences | Compare changes |
+| Save a JSON copy | Download JSON |
+| Find content | Search |
+| Recursive hierarchy | Tree view |
+| Rows and columns | Table view |
 
-## Requisitos
+Names and strings inside a user's JSON are data, not interface terminology, and are never translated.
 
-- Node.js 20.19+ ou 22.12+;
-- npm, incluído nas distribuições usuais do Node.js;
-- navegador moderno com suporte a `File`, `Blob`, `URL.createObjectURL` e módulos JavaScript.
+## Privacy
 
-## Instalação
+Your file is not sent to a server, database, or analytics service. Importing, editing, history, search, comparison, and export all happen in your browser. Unsaved state is lost when the tab is closed or reloaded.
+
+The only possible external traffic is an optional preview of a remote image URL already present in the JSON. In that case, the browser requests the image directly from its host; the JSON document is not sent. The application does not proxy, upload, or automatically download images.
+
+## Requirements
+
+- Node.js 20.19+ or 22.12+;
+- npm, included with standard Node.js distributions;
+- a modern browser with support for `File`, `Blob`, `URL.createObjectURL`, and JavaScript modules.
+
+## Installation
 
 ```bash
 npm install
 ```
 
-## Desenvolvimento
+## Development
 
 ```bash
 npm run dev
 ```
 
-O Vite informa o endereço local. O aplicativo não depende de backend nem de variáveis de ambiente.
+Vite prints the local address. The application has no backend and requires no environment variables.
 
-## Testes e verificações
+## Tests and checks
 
 ```bash
 npm test
@@ -56,9 +80,9 @@ npm run typecheck
 npm run lint
 ```
 
-- `npm test` executa a suíte Vitest;
-- `npm run typecheck` valida Vue e TypeScript em modo estrito;
-- `npm run lint` executa ESLint sem permitir avisos.
+- `npm test` runs the Vitest suite;
+- `npm run typecheck` checks Vue and TypeScript in strict mode;
+- `npm run lint` runs ESLint without allowing warnings.
 
 ## Build
 
@@ -66,113 +90,113 @@ npm run lint
 npm run build
 ```
 
-O comando executa o typecheck e gera os arquivos estáticos em `dist/`. Para conferir esse resultado localmente:
+The command runs the type check and generates static files in `dist/`. To inspect the production output locally:
 
 ```bash
 npm run preview
 ```
 
-## Dependências
+## Dependencies
 
-- `vue`: única dependência de execução, usada para componentes, reatividade e estado da interface;
-- `vite` e `@vitejs/plugin-vue`: servidor de desenvolvimento e empacotamento;
-- `typescript` e `vue-tsc`: tipagem estrita do domínio e dos componentes;
-- `vitest`: testes unitários das regras JSON;
-- `eslint`, `typescript-eslint`, `eslint-plugin-vue` e `vue-eslint-parser`: análise estática.
+- `vue`: the only runtime dependency, used for components and reactive interface state;
+- `vite` and `@vitejs/plugin-vue`: development server and production bundling;
+- `typescript` and `vue-tsc`: strict typing for the domain and components;
+- `vitest`: unit tests for JSON rules;
+- `eslint`, `typescript-eslint`, `eslint-plugin-vue`, and `vue-eslint-parser`: static analysis.
 
-Não há biblioteca de estado global, tabela, upload, manipulação de JSON ou CSS. As capacidades necessárias ao MVP são implementadas com Vue e APIs nativas do navegador.
+There is no state-management, table, upload, JSON-manipulation, or CSS library. The MVP uses Vue and native browser APIs.
 
-## Formatos suportados
+## Supported formats
 
-- entrada: um arquivo com extensão `.json` por vez;
-- raízes: objeto, array, string, número, booleano ou `null`;
-- saída: JSON formatado com dois espaços ou JSON compacto;
-- imagens possíveis: URLs HTTP/HTTPS cujo caminho termine em extensão conhecida, inclusive com query string, e `data:image` raster dentro do limite documentado.
+- input: one file with the `.json` extension at a time;
+- roots: object, array, string, number, boolean, or `null`;
+- output: JSON formatted with two spaces or compact JSON;
+- possible images: HTTP or HTTPS URLs whose path ends in a known image extension, including URLs with query strings, and raster `data:image` values within the documented limit.
 
-SVG incorporado em `data:image` não é carregado. Uma URL válida sem extensão de imagem conhecida não é pré-visualizada automaticamente.
+Embedded SVG `data:image` values are not loaded. A valid URL without a known image extension is not previewed automatically.
 
-## Inferência automática da interface
+## Automatic view inference
 
-A escolha depende somente do tipo e da estrutura real dos dados:
+The initial view depends only on the actual type and structure of the data:
 
-| Estrutura | Visualização inicial |
+| Structure | Initial view |
 |---|---|
-| Objeto | Formulário |
-| Array de valores simples | Lista editável |
-| Array somente de objetos, com até 16 colunas e ao menos 50% delas em cada linha | Tabela |
-| Array misto, aninhado ou muito irregular | Árvore |
-| Valor simples na raiz | Editor do próprio tipo |
-| `null` | Seletor explícito do tipo substituto |
+| Object | Form |
+| Array of primitive values | Editable list |
+| Array containing only objects, with at most 16 combined columns and at least 50% of those columns in every row | Table |
+| Mixed, nested, or highly irregular array | Tree |
+| Primitive root value | Editor for that value type |
+| `null` | Explicit replacement-type picker |
 
-As colunas da tabela seguem a primeira aparição de cada chave. Nenhum nome como `title`, `image`, `category` ou `id` influencia a inferência.
+Table columns follow the first appearance of each property. Names such as `title`, `image`, `category`, or `id` do not affect inference.
 
-## Decisões de segurança e integridade
+## Security and data-integrity decisions
 
-- caminhos JSON são arrays de segmentos `string | number`; pontos, espaços, barras, acentos e símbolos permanecem literais;
-- toda alteração passa por `src/core/json/operations.ts` e produz uma nova raiz;
-- renomeações e adições recusam chaves duplicadas;
-- duplicações usam cópia profunda;
-- arrays preservam ordem exata; a ordem de objetos é apenas uma apresentação previsível, sem significado semântico;
-- inteiros fora da faixa segura e números não finitos são rejeitados;
-- troca de tipo, substituição da raiz, exclusões relevantes e restauração exigem confirmação;
-- não há renderização de HTML fornecido pelo documento;
-- imagens remotas usam `referrerpolicy="no-referrer"`, link com `noopener noreferrer`, carregamento preguiçoso e limites de layout;
-- a exportação valida novamente o estado e serializa exclusivamente o valor JSON atual;
-- URLs, valores e tipos nunca são transformados por busca ou heurísticas de imagem;
-- URLs de objetos usadas no download são revogadas após o acionamento.
+- JSON paths are arrays of `string | number` segments, so dots, spaces, slashes, accents, and symbols remain literal;
+- every change passes through `src/core/json/operations.ts` and produces a new root;
+- renaming and creation reject duplicate property names;
+- duplication uses a deep copy;
+- arrays preserve exact order; object order is only a predictable presentation and has no semantic meaning;
+- unsafe integers and non-finite numbers are rejected;
+- type changes, root replacement, relevant deletions, and restoration require confirmation;
+- document-provided HTML is never rendered;
+- remote images use `referrerpolicy="no-referrer"`, links use `noopener noreferrer`, loading is lazy, and dimensions are constrained;
+- export validates the current state again and serializes only the current JSON value;
+- search and image heuristics never transform URLs, property names, strings, or value types;
+- object URLs created for downloads are revoked after use;
+- application language never changes imported filenames or JSON content.
 
-## Histórico e comparação
+## History and comparison
 
-O histórico usa snapshots imutáveis, com até 50 estados anteriores e 50 estados para refazer. Digitação consecutiva no mesmo campo dentro de 750 ms forma uma única etapa. `Ctrl+Z`/`Cmd+Z`, `Ctrl+Y` e `Cmd+Shift+Z` atuam fora dos campos; dentro deles, o navegador mantém seu desfazer nativo.
+History uses immutable snapshots, with up to 50 previous states and 50 redo states. Consecutive typing in the same field within 750 ms is grouped into one step. `Ctrl+Z`/`Cmd+Z`, `Ctrl+Y`, and `Cmd+Shift+Z` work outside form fields; inside a field, the browser keeps its native text undo behavior.
 
-A comparação percorre o documento estruturalmente. A ordem das propriedades de objetos é ignorada; a ordem dos arrays é significativa. Uma troca de ordem que mantém exatamente os mesmos elementos é apresentada como reordenação.
+Comparison walks the document structurally. Object property order is ignored, while array order is significant. A change that keeps exactly the same array elements in a different sequence is reported as a reorder.
 
-## Arquitetura resumida
+## Architecture summary
 
-- o domínio JSON é independente do Vue;
-- componentes emitem operações tipadas e não modificam o documento diretamente;
-- o composable do documento coordena importação, histórico, diff, estado exportado e download;
-- estado de busca, seleção, foco e painéis permanece somente na interface;
-- CSS comum controla layout, contenção de tabelas, cards responsivos, contraste e movimento reduzido.
+- the JSON domain is independent of Vue;
+- components emit typed operations and do not mutate the document directly;
+- the document composable coordinates import, history, comparison, downloaded state, and export;
+- search, selection, focus, and panel state stay only in the interface;
+- shared CSS controls responsive layout, table containment, focus, contrast, and reduced motion.
 
-## Estrutura das pastas
+## Folder structure
 
 ```text
 src/
-├── composables/          # estado do documento e gerenciamento reutilizável de foco
-├── core/json/            # parser, análise, operações, histórico, diff, busca e exportação
+├── composables/          # document state and reusable focus management
+├── core/json/            # parser, analysis, operations, history, comparison, search, and export
 ├── features/
-│   ├── comparison/       # painel de diferenças estruturais
-│   ├── editor/           # editor recursivo, tabela, tipos, imagens e diálogos
-│   ├── export/           # configuração e acionamento do download
-│   ├── import/           # dropzone e resumo do arquivo
-│   └── search/           # busca global e resultados
-├── styles/               # design responsivo e acessível
+│   ├── comparison/       # structural changes panel
+│   ├── editor/           # recursive editor, table, types, images, and dialogs
+│   ├── export/           # download configuration and browser download
+│   ├── import/           # file drop zone and imported-file summary
+│   └── search/           # global search and results
+├── styles/               # responsive and accessible visual system
 ├── App.vue
 └── main.ts
 docs/
-└── MVP.md                # escopo, decisões e estado final dos requisitos
+└── MVP.md                # scope, decisions, and final requirement status
 ```
 
-## Limitações conhecidas
+## Known limitations
 
-- apenas um documento pode ser aberto por vez;
-- o estado existe somente durante a vida da aba;
-- documentos gigantes não têm virtualização ou processamento em worker;
-- snapshots de documentos grandes ainda podem consumir memória relevante, embora o histórico seja limitado;
-- decimais seguem a precisão IEEE 754 do JavaScript;
-- a heurística de imagem pode produzir falso positivo ou falha de carregamento;
-- a comparação identifica reordenação apenas quando o array mantém o mesmo multiconjunto de valores;
-- não existe persistência, sincronização ou colaboração.
+- one document can be open at a time;
+- state exists only for the lifetime of the browser tab;
+- very large documents are not virtualized or processed in a worker;
+- large documents can still make snapshot history use significant memory, although history is limited;
+- decimals follow JavaScript IEEE 754 precision;
+- image detection can produce a false positive or a remote loading failure;
+- comparison reports reordering only when the array keeps the same multiset of values;
+- there is no persistence, synchronization, or collaboration.
 
-## Próximos passos fora do MVP
+## Future work outside the MVP
 
-Possíveis evoluções, conscientemente excluídas desta versão:
-
-- suporte opcional a JSON Schema;
-- virtualização e workers para arquivos muito grandes;
-- política explícita para números de precisão arbitrária;
-- persistência local opcional;
-- edição simultânea de vários arquivos;
-- backend, contas, nuvem e colaboração;
-- integrações externas e publicação automática.
+- optional JSON Schema support;
+- virtualization and workers for very large files;
+- an explicit arbitrary-precision number policy;
+- optional local persistence;
+- editing multiple files at once;
+- backend services, accounts, cloud storage, and collaboration;
+- external integrations and automatic publishing;
+- a localization framework and language selector if additional languages are introduced.

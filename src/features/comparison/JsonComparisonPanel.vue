@@ -21,10 +21,10 @@ const closeButton = ref<HTMLButtonElement | null>(null)
 const panel = ref<HTMLElement | null>(null)
 const { trapFocus } = useDialogFocus(panel, closeButton)
 const labels: Record<JsonChangeKind, string> = {
-  added: 'Adicionado',
-  removed: 'Removido',
-  changed: 'Alterado',
-  reordered: 'Reordenado',
+  added: 'Added',
+  removed: 'Removed',
+  changed: 'Changed',
+  reordered: 'Reordered',
 }
 
 function preview(value: JsonValue): string {
@@ -55,15 +55,15 @@ function afterValue(change: JsonChange): JsonValue | undefined {
       >
         <header class="details-panel__header">
           <div>
-            <p>Original × atual</p>
-            <h2 :id="titleId">Comparação estrutural</h2>
-            <code>{{ changes.length }} {{ changes.length === 1 ? 'mudança' : 'mudanças' }}</code>
+            <p>Original × current</p>
+            <h2 :id="titleId">Structural comparison</h2>
+            <code>{{ changes.length }} {{ changes.length === 1 ? 'change' : 'changes' }}</code>
           </div>
           <button
             ref="closeButton"
             class="details-panel__close icon-button"
             type="button"
-            aria-label="Fechar comparação"
+            aria-label="Close comparison"
             @click="emit('close')"
           >
             ×
@@ -73,8 +73,8 @@ function afterValue(change: JsonChange): JsonValue | undefined {
         <div class="details-panel__body">
           <div v-if="changes.length === 0" class="comparison-empty" role="status">
             <span aria-hidden="true">✓</span>
-            <strong>Nenhuma diferença estrutural</strong>
-            <p>O documento atual é semanticamente igual ao original.</p>
+            <strong>No structural differences</strong>
+            <p>The current document is semantically equal to the original.</p>
           </div>
 
           <ol v-else class="change-list">
@@ -88,19 +88,19 @@ function afterValue(change: JsonChange): JsonValue | undefined {
 
               <div class="change-values">
                 <div>
-                  <span>Antes</span>
+                  <span>Before</span>
                   <pre v-if="beforeValue(change) !== undefined">{{ preview(beforeValue(change) as JsonValue) }}</pre>
-                  <em v-else>Não existia</em>
+                  <em v-else>Did not exist</em>
                 </div>
                 <div>
-                  <span>Agora</span>
+                  <span>Now</span>
                   <pre v-if="afterValue(change) !== undefined">{{ preview(afterValue(change) as JsonValue) }}</pre>
-                  <em v-else>Não existe</em>
+                  <em v-else>Does not exist</em>
                 </div>
               </div>
 
               <button class="button button--quiet" type="button" @click="emit('navigate', change)">
-                Ir para o editor
+                Go to editor
               </button>
             </li>
           </ol>

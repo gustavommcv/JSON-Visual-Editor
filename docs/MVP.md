@@ -1,214 +1,214 @@
-# Escopo do MVP — JSON Visual Editor
+# JSON Visual Editor — MVP
 
-## Visão do produto
+## Product vision
 
-O JSON Visual Editor é uma aplicação web genérica para que qualquer pessoa carregue e edite dados JSON visualmente, sem precisar conhecer a sintaxe do formato. A estrutura deve ser descoberta dinamicamente em tempo de execução, sem depender de projeto, propriedade ou schema específico.
+JSON Visual Editor is a generic web application that lets anyone open and edit JSON data visually without learning JSON syntax. The application discovers structure at runtime and does not depend on a specific project, property name, or schema.
 
-Todo o processamento deve acontecer localmente no navegador.
+The MVP uses English as its single application language. User-provided filenames, property names, string values, URLs, and all other JSON content are preserved exactly and are never translated.
 
-## Fluxo do MVP
+## MVP flow
 
-1. Selecionar ou arrastar um arquivo JSON.
-2. Analisar sua estrutura automaticamente.
-3. Escolher uma visualização apropriada.
-4. Editar objetos, arrays e valores simples.
-5. Adicionar, duplicar, excluir e reordenar dados.
-6. Pesquisar chaves e valores.
-7. Pré-visualizar URLs de imagens.
-8. Desfazer e refazer alterações.
-9. Comparar o original com a versão atual.
-10. Baixar o JSON atualizado.
+1. Choose or drag and drop a JSON file.
+2. Analyze its structure automatically.
+3. Select an appropriate initial view.
+4. Edit values and structure.
+5. Search the entire document.
+6. Open item details and image previews when available.
+7. Undo, redo, and restore changes.
+8. Compare the current document with the original.
+9. Download formatted or compact JSON.
 
-## Escopo completo
+## Complete scope
 
-- upload por clique e por arrastar e soltar;
-- suporte a raiz objeto, array, string, número, booleano ou `null`;
-- editor recursivo;
-- formulário automático para objetos;
-- tabela automática para arrays de objetos;
-- editor em árvore como alternativa;
-- troca manual entre visualizações compatíveis;
-- página ou painel detalhado para cada item;
-- pré-visualização automática de imagens;
-- criação, edição e renomeação de propriedades;
-- duplicação, exclusão e reordenação;
-- busca por chaves e valores;
-- desfazer e refazer;
-- comparação das alterações;
-- restauração do documento original;
-- download formatado ou compactado;
-- interface responsiva;
-- acessibilidade por teclado e leitor de tela;
-- armazenamento temporário somente no navegador.
+- import by clicking or dragging and dropping;
+- object, array, string, number, boolean, and `null` roots;
+- recursive editing;
+- automatic object form;
+- automatic table for arrays of similar objects;
+- editable list for simple arrays;
+- tree view for mixed or irregular structures;
+- manual switching between compatible views;
+- item details panel;
+- automatic image-candidate preview;
+- property and item creation, editing, renaming, duplication, deletion, and reordering;
+- segmented paths and breadcrumbs;
+- global search;
+- undo, redo, and restoration;
+- structural comparison;
+- formatted and compact download;
+- responsive and accessible browser interface;
+- temporary browser-only storage.
 
-## Fora do MVP
+## Explicitly outside the MVP
 
-- backend ou banco de dados;
-- login e cadastro;
-- armazenamento em nuvem;
-- colaboração;
-- integração com GitHub;
-- publicação automática;
-- JSON Schema;
-- perfis específicos;
-- inteligência artificial;
-- edição simultânea de vários arquivos;
-- suporte especial a arquivos gigantes.
+- authentication and accounts;
+- backend storage or cloud synchronization;
+- collaboration;
+- GitHub integration from the product interface;
+- automatic publishing;
+- domain-specific templates;
+- AI-generated edits;
+- simultaneous editing of multiple files;
+- JSON Schema authoring;
+- a localization framework or language selector.
 
-## Etapa 1 — implementada
+## Delivered stages
 
-- estrutura base em Vue 3, TypeScript estrito e Vite;
-- layout principal responsivo;
-- seleção e arrastar/soltar arquivo;
-- leitura local e validação do JSON;
-- reconhecimento das seis raízes JSON válidas;
-- documento original e documento atual mantidos separadamente;
-- nome e resumo básico do arquivo importado;
-- remoção do documento e retorno à tela inicial;
-- download formatado do documento sem alterações;
-- aviso de privacidade local;
-- tratamento de arquivo vazio, JSON inválido, inteiro inseguro e número fora da faixa;
-- testes do parser e exportador.
+### Foundation and import
 
-## Etapa 2 — implementada
+- Vue 3, strict TypeScript, and Vite project foundation;
+- responsive main layout;
+- file selection and drag-and-drop handlers sharing one `FileList` pipeline;
+- local reading and JSON validation;
+- recognition of all six valid JSON root types;
+- clear English errors for empty files, malformed JSON, unsafe integers, and unsupported numbers;
+- imported filename and structural summary;
+- file removal and return to the start screen.
 
-- editor coordenador recursivo para os seis tipos JSON;
-- formulário automático para objetos;
-- tabela para arrays de objetos razoavelmente uniformes;
-- lista para arrays simples;
-- árvore para arrays mistos, aninhados ou irregulares;
-- troca manual entre visualizações compatíveis;
-- edição de valores e troca de tipo em qualquer caminho;
-- substituição e edição de valor simples na raiz;
-- criação e exclusão de propriedades e itens;
-- renomeação de propriedades com prevenção de chave duplicada;
-- escolha explícita de tipo ao preencher arrays vazios ou substituir `null`;
-- objetos e arrays aninhados recolhíveis;
-- breadcrumb atualizado conforme o campo focado;
-- área de trabalho com rolagem própria para estruturas profundas;
-- operações imutáveis centralizadas e testadas.
+### Recursive editor
 
-## Etapa 3 — implementada
+- central `JsonValueEditor` coordinator selected by the actual value type;
+- object form, simple-array list, uniform-object table, and irregular tree;
+- manual view switching;
+- value editing and type changes at any path;
+- primitive root editing and root replacement;
+- creation and deletion of properties and items;
+- collision-safe property renaming;
+- explicit type choice when replacing `null` or adding to an empty array;
+- collapsible nested objects and arrays;
+- segmented breadcrumbs;
+- independently scrolling workspace for deep structures;
+- immutable operations centralized in the domain layer.
 
-- tabela automática com colunas obtidas pela união estável das propriedades;
-- suporte a colunas ausentes em parte dos itens;
-- edição direta de strings, números, booleanos e valores nulos na tabela;
-- resumo de objetos e arrays aninhados dentro das células;
-- painel lateral acessível para editar o item completo;
-- cards editáveis como apresentação responsiva da tabela;
-- duplicação profunda de itens e propriedades;
-- geração central de nomes únicos para propriedades duplicadas;
-- exclusão de propriedades e itens com confirmação e caminho afetado;
-- movimento exato de itens de arrays para cima e para baixo;
-- reordenação previsível de propriedades textuais quando representável;
-- substituição confirmada do valor raiz;
-- estado de seleção mantido apenas na interface, sem metadados no documento.
+### Table and CRUD
 
-## Etapa 4 — implementada
+- table columns from the stable union of object properties;
+- explicit missing-property cells;
+- direct typed editing of primitive cells;
+- nested object and array summaries;
+- accessible item details panel;
+- editable responsive cards below 760 px;
+- deep duplication of items and properties;
+- unique English copy names generated centrally;
+- confirmation for relevant destructive changes, with the affected path;
+- exact array reordering;
+- predictable object-property presentation when representable;
+- root replacement;
+- interface-only selection state with no JSON metadata.
 
-- detecção genérica de URLs HTTP/HTTPS com extensões de imagem conhecidas;
-- suporte a query strings e a `data:image` raster de tamanho limitado;
-- pré-visualização preguiçosa no painel detalhado, preservando proporção e limites do layout;
-- fallback de carregamento e abertura segura da URL;
-- `referrerpolicy="no-referrer"` para imagens remotas;
-- aviso de que a prévia remota ainda consulta o servidor da imagem;
-- busca recursiva por chaves, strings, números, booleanos e caminhos completos;
-- comparação textual sem distinção entre maiúsculas e minúsculas;
-- resultados com caminho exato, tipo de correspondência e prévia do valor;
-- navegação que expande ancestrais, abre detalhes tabulares quando necessário e destaca o destino;
-- atraso curto durante a digitação e limite de resultados;
-- ausência de qualquer mutação ou metadado interno causada pela busca.
+### Images and search
 
-## Etapa 5 — implementada
+- generic detection of HTTP and HTTPS URLs with known image extensions;
+- support for query strings and bounded raster `data:image` values;
+- lazy preview with preserved proportions and layout limits;
+- loading-failure fallback that does not change the value;
+- safe external link behavior and `referrerpolicy="no-referrer"` where applicable;
+- disclosure that a remote preview contacts the image host;
+- recursive search across property names, strings, numbers, booleans, and full paths;
+- case-insensitive matching;
+- exact paths, match types, and value previews;
+- navigation that expands ancestors, opens table details when needed, and highlights the target;
+- 180 ms input delay and a limit of 250 results;
+- no mutation or metadata from search.
 
-- histórico central com snapshots imutáveis para todas as operações;
-- limite de 50 estados anteriores e 50 estados para refazer;
-- agrupamento de digitação no mesmo campo dentro de uma janela de 750 ms;
-- desfazer e refazer por botões e atalhos compatíveis com Windows, Linux e macOS;
-- preservação do desfazer nativo enquanto o foco está em campos de texto;
-- descarte da pilha de refazer após uma nova edição;
-- restauração completa do original como operação reversível;
-- indicação visual da existência de alterações não exportadas;
-- comparação estrutural recursiva entre original e atual;
-- adição, remoção, alteração e reordenação pura de arrays identificadas por caminho;
-- ordem das propriedades de objetos ignorada semanticamente na comparação;
-- navegação de cada diferença até o editor;
-- escolha entre JSON formatado com dois espaços e JSON compacto;
-- nome de download sugerido com o sufixo `-editado.json`;
-- validação do estado interno antes da criação do download;
-- ausência de metadados de interface, histórico ou busca no conteúdo exportado;
-- preservação do documento e do histórico depois do download.
+### History, comparison, and export
 
-## Estado final dos requisitos
+- central immutable snapshot history for every operation;
+- limits of 50 undo and 50 redo states;
+- continuous typing in the same field grouped within 750 ms;
+- Undo and Redo controls and Windows, Linux, and macOS shortcuts;
+- native field-level text undo preserved;
+- redo stack discarded after a new edit;
+- complete, reversible restoration of the original;
+- visible status for changes not yet downloaded;
+- recursive structural comparison;
+- added, removed, changed, and pure array-reorder changes identified by path;
+- object property order ignored semantically;
+- navigation from each change to the editor;
+- formatted two-space or compact JSON;
+- edited filename suggestion based on the original filename;
+- validation before download;
+- no interface, history, or search metadata in downloaded JSON;
+- document and history preserved after download.
 
-| Requisito | Estado final | Evidência principal |
+## Final requirement status
+
+| Requirement | Final status | Main evidence |
 |---|---|---|
-| Importar por clique e arrastar | Concluído | `JsonDropzone.vue` encaminha seleção e `drop` para o mesmo fluxo de `FileList` |
-| Seis tipos JSON na raiz | Concluído | `JsonValueEditor.vue`, `JsonPrimitiveEditor.vue` e testes de operações/parser |
-| Editor recursivo | Concluído | `JsonValueEditor.vue` chama a si próprio com caminhos segmentados |
-| Formulário para objetos | Concluído | propriedades editáveis, renomeáveis, recolhíveis e com CRUD |
-| Tabela automática | Concluído | `analyzer.ts` e tabela semântica com união de colunas |
-| Lista e árvore alternativas | Concluído | seleção manual entre visualizações compatíveis |
-| Painel detalhado por item | Concluído | `JsonItemDetailsPanel.vue`, com foco contido e restaurado |
-| Imagens | Concluído | `image.ts` e `ImagePreview.vue`, sem alterar o valor original |
-| CRUD e reordenação | Concluído | operações imutáveis centralizadas em `operations.ts` |
-| Busca global | Concluído | `search.ts` e `JsonSearchPanel.vue`, sem metadados no documento |
-| Desfazer, refazer e restauração | Concluído | snapshots limitados em `history.ts` |
-| Comparação estrutural | Concluído | `diff.ts` e painel navegável de comparação |
-| Exportação formatada e compacta | Concluído | validação em `exporter.ts` e download por `Blob` |
-| Responsividade | Concluído | cards abaixo de 760 px, tabela contida e ausência de rolagem horizontal na página |
-| Acessibilidade | Concluído | semântica nativa, labels, alertas, foco visível, contraste, foco de diálogos e movimento reduzido |
-| Processamento local | Concluído | nenhuma chamada de backend; somente prévias remotas opcionais fazem requisição ao host da imagem |
+| Click and drag import | Complete | `JsonDropzone.vue` sends both inputs through the same file-selection pipeline |
+| Six JSON root types | Complete | `JsonValueEditor.vue`, `JsonPrimitiveEditor.vue`, parser and operation tests |
+| Recursive editor | Complete | `JsonValueEditor.vue` recursively renders segmented child paths |
+| Object form | Complete | Editable, renameable, collapsible properties with CRUD |
+| Automatic table | Complete | `analyzer.ts` and a semantic table with a union of columns |
+| List and tree alternatives | Complete | Manual selection between compatible views |
+| Item details | Complete | `JsonItemDetailsPanel.vue` with contained and restored focus |
+| Images | Complete | `image.ts` and `ImagePreview.vue`, without changing source values |
+| CRUD and reordering | Complete | Immutable operations centralized in `operations.ts` |
+| Global search | Complete | `search.ts` and `JsonSearchPanel.vue`, without document metadata |
+| Undo, redo, and restoration | Complete | Limited snapshots in `history.ts` |
+| Structural comparison | Complete | `diff.ts` and navigable comparison panel |
+| Formatted and compact download | Complete | Validation in `exporter.ts` and browser `Blob` download |
+| Responsive layout | Complete | Cards below 760 px, contained tables, and no page-level horizontal overflow |
+| Accessibility | Complete | Native semantics, labels, alerts, visible focus, contrast, dialog focus, and reduced motion |
+| Local processing | Complete | No backend calls; optional remote previews contact only the image host |
+| English-only application | Complete | English interface, accessibility text, source messages, tests, HTML metadata, and documentation |
+| User-data language preservation | Complete | Parser, operations, search, and export use literal values; dedicated Portuguese fixtures verify preservation |
 
-## Fluxos finais auditados
+## Audited end-to-end flows
 
-| Fluxo | Estado | Evidência |
+| Flow | Status | Evidence |
 |---|---|---|
-| 1. Importar por clique | Validado | seletor nativo abriu e carregou arquivos objeto e array |
-| 2. Importar por arrastar | Validado por implementação | eventos `dragenter`, `dragover`, `dragleave` e `drop` usam o mesmo `FileList` e o mesmo pipeline validado no fluxo por clique; o gesto com arquivo real do sistema operacional não pôde ser sintetizado pela automação do navegador |
-| 3. Editar objeto na raiz | Validado | string, número e booleano alterados em propriedades do objeto raiz |
-| 4. Editar array na raiz | Validado | células e itens alterados diretamente no array raiz |
-| 5. Editar valores simples e `null` na raiz | Validado | substituição e edição dos quatro valores simples e escolha explícita após `null` |
-| 6. Navegar por estruturas aninhadas | Validado | breadcrumb e expansão chegaram a seis segmentos de profundidade |
-| 7. Usar tabela automática | Validado | arrays uniformes abriram em tabela com cabeçalhos e células tipadas |
-| 8. Trocar para árvore | Validado | seletor de visualização substituiu a tabela por árvore |
-| 9–13. Adicionar, editar, duplicar, excluir e reordenar | Validado | operações executadas na interface e cobertas unitariamente |
-| 14. Pesquisar | Validado | busca aninhada retornou caminho completo e navegou ao resultado |
-| 15. Visualizar imagens | Validado | imagens horizontal e vertical permaneceram contidas e carregaram de forma preguiçosa |
-| 16. Desfazer e refazer | Validado | interface e testes confirmaram as duas pilhas e o descarte de redo |
-| 17. Comparar alterações | Validado | painel exibiu caminho, valor anterior e valor atual e navegou ao editor |
-| 18. Restaurar | Validado | documento voltou ao original e a restauração permaneceu reversível |
-| 19–20. Baixar formatado e compacto | Validado | os dois arquivos foram gerados, reanalisados como JSON válido e comparados |
-| 21. Abrir novamente o exportado | Validado | o JSON compacto exportado foi reimportado com tipos e tabela preservados |
+| 1. Import by clicking | Validated | Native picker loaded object and array files |
+| 2. Import by dragging | Validated by implementation | Drag events and click selection share the same `FileList` pipeline; the operating-system file gesture could not be synthesized by browser automation |
+| 3. Edit a root object | Validated | String, number, and boolean properties changed at the root |
+| 4. Edit a root array | Validated | Cells and items changed directly in the root array |
+| 5. Edit primitive and `null` roots | Validated | Root replacement and editing covered all primitive types and explicit replacement after `null` |
+| 6. Navigate nested structures | Validated | Breadcrumb and expansion reached six path segments |
+| 7. Use the automatic table | Validated | Uniform arrays opened with typed cells and semantic headers |
+| 8. Switch to tree view | Validated | The view control replaced the table with a tree |
+| 9–13. Add, edit, duplicate, delete, and reorder | Validated | Operations executed in the interface and covered by unit tests |
+| 14. Search | Validated | Nested search returned a full path and navigated to its result |
+| 15. Preview images | Validated | Horizontal and vertical images stayed contained and loaded lazily |
+| 16. Undo and redo | Validated | Buttons, keyboard shortcuts, stack behavior, and native field undo were verified |
+| 17. Compare changes | Validated | Panel showed path, previous value, current value, and editor navigation |
+| 18. Restore original | Validated | Document returned to the original and restoration remained undoable |
+| 19–20. Download formatted and compact | Validated | Both files were generated, parsed as valid JSON, and compared |
+| 21. Reopen downloaded file | Validated | Compact output was imported again with its structure and types intact |
 
-## Arquitetura
+## Architecture decisions
 
-As regras JSON vivem em `src/core/json`, independentes do Vue. Funcionalidades com interação de navegador são organizadas em `src/features`, enquanto estado de tela reutilizável fica em `src/composables`. Os caminhos JSON são representados por segmentos, nunca por strings concatenadas com pontos.
+JSON rules live in `src/core/json` and do not depend on Vue. Browser interactions live in `src/features`, and reusable screen state lives in `src/composables`. JSON paths are segment arrays rather than dot-concatenated strings.
 
-Todas as edições passam por `src/core/json/operations.ts`. Cada operação valida o caminho e o contêiner, copia apenas os ancestrais necessários e devolve uma nova raiz. Os componentes emitem intenções tipadas e nunca modificam o documento diretamente.
+Every edit passes through `src/core/json/operations.ts`. An operation validates its path and container, copies only the required ancestors, and returns a new root. Components emit typed intentions and never mutate the document directly.
 
-A visualização padrão é inferida apenas do tipo real e da uniformidade estrutural. Para ser considerada tabular, uma coleção deve conter somente objetos, ter no máximo 16 colunas combinadas e cada linha deve preencher pelo menos 50% delas. Nenhum nome de propriedade participa da decisão.
+The default view is inferred only from the actual value type and structural uniformity. A table candidate must contain only objects, expose no more than 16 combined columns, and fill at least 50% of those columns in every row. Property names never influence this decision.
 
-As colunas tabulares seguem a primeira aparição de cada chave na coleção. Propriedades ausentes são representadas explicitamente e podem ser criadas escolhendo seu tipo. Valores aninhados são resumidos na célula e editados no painel do item para evitar tabelas excessivamente altas.
+Table columns follow the first appearance of each property. A missing property is explicit and can be created by choosing a type. Nested values are summarized in cells and edited in the item panel to prevent excessively tall tables.
 
-Arrays possuem ordem semântica e sua reordenação é exata. Objetos JSON não possuem ordem semântica, embora a implementação preserve uma apresentação previsível para chaves textuais. Objetos com chaves que se comportam como índices numéricos do JavaScript não oferecem reordenação visual, pois o runtime controla a ordem de enumeração nesses casos.
+Arrays have semantic order and are reordered exactly. JSON objects do not have semantic property order, although the implementation keeps a predictable presentation for ordinary string keys. Objects with JavaScript array-index-like keys do not offer visual property reordering because the runtime controls their enumeration order.
 
-Identificadores e seleções necessários à interface permanecem somente no estado Vue. As operações de domínio trabalham exclusivamente com os valores fornecidos pelo usuário; nenhum campo interno é adicionado ao JSON exportado.
+Interface identifiers, search state, selection, and focus stay in Vue state. The domain layer operates exclusively on user values, and no internal property is added to exported JSON.
 
-O histórico vive em `src/core/json/history.ts`. Cada edição válida cria um snapshot, exceto eventos consecutivos de digitação no mesmo caminho dentro de 750 ms, que compartilham uma etapa. As pilhas anterior e futura são limitadas a 50 entradas, evitando crescimento ilimitado. Restaurar o original é um novo snapshot, portanto também pode ser desfeito.
+History lives in `src/core/json/history.ts`. Each valid edit creates a snapshot except consecutive string edits at the same path within 750 ms. The past and future stacks are limited to 50 entries. Restoring the original creates a new snapshot and can therefore be undone.
 
-A comparação vive em `src/core/json/diff.ts` e percorre valores recursivamente. Chaves de objetos são comparadas como conjuntos, pois sua ordem não é semântica; índices de arrays são comparados em ordem. Quando dois arrays possuem exatamente o mesmo multiconjunto de elementos e apenas a sequência muda, a alteração é classificada como reordenação.
+Comparison lives in `src/core/json/diff.ts` and walks values recursively. Object keys are compared as sets because their order is not semantic; array indices are compared in order. If two arrays contain the same multiset of values in a different sequence, the change is classified as a reorder.
 
-A exportação valida novamente o valor em `src/core/json/exporter.ts`, serializa somente o documento atual e cria o arquivo no navegador. Nenhum estado do composable ou dos componentes participa dessa serialização.
+Export validates the current value in `src/core/json/exporter.ts`, serializes only that value, and creates the file in the browser. No composable or component state participates in serialization.
 
-Tabelas largas permanecem dentro de `.table-scroll`, com contenção de layout e pintura; o documento não herda a largura das colunas. Abaixo de 760 px a apresentação visual muda para cards, mantendo os mesmos editores tipados. Estruturas profundas usam a área de trabalho com rolagem própria.
+Wide tables stay inside `.table-scroll` with layout and paint containment. Below 760 px, the visual presentation changes to cards while keeping the same typed editors. Deep structures use an independently scrolling workspace.
 
-Diálogos e painéis guardam o controle que os abriu, mantêm `Tab` e `Shift+Tab` dentro da interface modal e restauram o foco ao fechar. Quando uma exclusão remove o controle original, o foco recua para o ancestral JSON ainda existente.
+Dialogs and panels remember the control that opened them, contain `Tab` and `Shift+Tab`, and restore focus when closed. If deletion removes the original control, focus falls back to the nearest remaining JSON ancestor.
 
-A busca vive em `src/core/json/search.ts`, percorre somente o valor JSON atual e devolve resultados com caminhos segmentados. A navegação usa esses caminhos para expandir componentes e aplicar classes visuais; o documento não recebe marcações. Consultas são adiadas em 180 ms e limitadas a 250 resultados.
+Search lives in `src/core/json/search.ts`, visits only the current JSON value, and returns segmented paths. Navigation expands components and applies interface highlight classes; it never marks the document itself.
 
-A heurística de imagem vive em `src/core/json/image.ts`. URLs remotas só são consideradas quando usam HTTP/HTTPS e terminam em extensão conhecida no `pathname`; query strings não interferem. `data:image` é limitado a formatos raster conhecidos e a 1.000.000 de caracteres. SVG incorporado é excluído por segurança. A prévia é feita diretamente pelo navegador, sem proxy, e por isso uma imagem remota ainda gera uma requisição ao host informado pelo usuário.
+Image detection lives in `src/core/json/image.ts`. Remote URLs must use HTTP or HTTPS and end in a known extension in their `pathname`; query strings do not interfere. Raster `data:image` input is limited to 1,000,000 characters, while embedded SVG is excluded. Remote previews are made directly by the browser and therefore contact the host supplied in the user's JSON.
 
-## Política numérica
+## Numeric policy
 
-A importação rejeita inteiros fora da faixa segura do JavaScript e valores que seriam convertidos em infinito. Isso evita que abrir e baixar um arquivo altere números silenciosamente. A precisão arbitrária para decimais não faz parte desta etapa e deverá ser tratada por uma decisão explícita de representação antes de ser implementada.
+Import rejects integers outside JavaScript's safe range and numeric values that become infinite. This prevents opening and downloading a file from silently changing a number. Arbitrary decimal precision remains outside this MVP and requires an explicit representation decision before implementation.
+
+## Language policy
+
+English is the single default language for application-owned interface text, accessible names, announcements, errors, source documentation, tests, examples, and project documentation. No translation framework or language selector is included in the MVP.
+
+Imported content is opaque user data. The application never translates, normalizes, or otherwise rewrites a filename, property name, string value, URL, search result, or exported value because of its language.

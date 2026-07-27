@@ -183,9 +183,9 @@ function requestTypeChange(valueType: JsonRootKind): void {
   }
 
   pendingConfirmation.value = {
-    title: 'Alterar o tipo deste valor?',
-    description: 'O conteúdo atual será substituído pelo valor inicial do novo tipo.',
-    confirmLabel: 'Alterar tipo',
+    title: 'Change this value type?',
+    description: 'The current content will be replaced with the default value for the new type.',
+    confirmLabel: 'Change type',
     path: props.path,
     operation: { kind: 'change-type', path: props.path, valueType },
   }
@@ -200,9 +200,9 @@ function onCollectionTypeChange(event: Event): void {
 function requestRootReplacement(valueType: JsonRootKind): void {
   replacingRoot.value = false
   pendingConfirmation.value = {
-    title: 'Substituir todo o documento?',
-    description: 'A raiz atual e todos os valores abaixo dela serão substituídos.',
-    confirmLabel: 'Substituir raiz',
+    title: 'Replace the entire document?',
+    description: 'The current root and every value inside it will be replaced.',
+    confirmLabel: 'Replace root',
     path: [],
     operation: { kind: 'replace-root', value: createJsonValue(valueType) },
   }
@@ -258,9 +258,9 @@ function moveArrayItem(fromIndex: number, toIndex: number): void {
 
 function requestRemove(path: JsonPath, description: string): void {
   pendingConfirmation.value = {
-    title: 'Excluir este conteúdo?',
+    title: 'Delete this content?',
     description,
-    confirmLabel: 'Excluir',
+    confirmLabel: 'Delete',
     path,
     operation: { kind: 'remove-value', path },
   }
@@ -277,9 +277,9 @@ function confirmPendingOperation(): void {
 function handleTableCellOperation(operation: JsonEditorOperation, currentValue: JsonValue): void {
   if (operation.kind === 'change-type' && currentValue !== null) {
     pendingConfirmation.value = {
-      title: 'Alterar o tipo desta célula?',
-      description: 'O valor atual da célula será substituído pelo valor inicial do novo tipo.',
-      confirmLabel: 'Alterar tipo',
+      title: 'Change this cell type?',
+      description: 'The current cell value will be replaced with the default value for the new type.',
+      confirmLabel: 'Change type',
       path: operation.path,
       operation,
     }
@@ -308,10 +308,10 @@ function hasProperty(value: JsonObject, key: string): boolean {
 
 function viewLabel(view: JsonCollectionView): string {
   const labels: Record<JsonCollectionView, string> = {
-    form: 'Formulário',
-    table: 'Tabela',
+    form: 'Form',
+    table: 'Table',
     list: 'Cards',
-    tree: 'Árvore',
+    tree: 'Tree',
   }
   return labels[view]
 }
@@ -328,19 +328,19 @@ function viewLabel(view: JsonCollectionView): string {
     tabindex="-1"
   >
     <div v-if="depth === 0" class="root-replacement">
-      <span>Raiz do documento</span>
+      <span>Document root</span>
       <button
         v-if="!replacingRoot"
         class="mini-button"
         type="button"
         @click="replacingRoot = true"
       >
-        Substituir raiz
+        Replace root
       </button>
       <JsonTypePicker
         v-else
-        label="Novo tipo da raiz"
-        confirm-label="Continuar"
+        label="New root type"
+        confirm-label="Continue"
         @select="requestRootReplacement"
         @cancel="replacingRoot = false"
       />
@@ -349,7 +349,7 @@ function viewLabel(view: JsonCollectionView): string {
     <JsonPrimitiveEditor
       v-if="value !== null && !isCollection"
       :value="primitiveValue"
-      :label="path.length === 0 ? 'valor raiz' : String(path[path.length - 1])"
+      :label="path.length === 0 ? 'root value' : String(path[path.length - 1])"
       :show-image-preview="imagePreviews"
       @set-value="setValue"
       @change-type="requestTypeChange"
@@ -358,12 +358,12 @@ function viewLabel(view: JsonCollectionView): string {
     <div v-else-if="value === null" class="null-editor">
       <div>
         <span class="type-badge">null</span>
-        <strong>Valor nulo</strong>
-        <p>Escolha um tipo para substituir este valor.</p>
+        <strong>Null value</strong>
+        <p>Choose a type to replace this value.</p>
       </div>
       <JsonTypePicker
-        label="Novo tipo"
-        confirm-label="Substituir"
+        label="New type"
+        confirm-label="Replace"
         :show-cancel="false"
         @select="requestTypeChange"
       />
@@ -378,13 +378,13 @@ function viewLabel(view: JsonCollectionView): string {
       <summary>
         <span class="collapse-indicator" aria-hidden="true">›</span>
         <span class="type-badge">{{ valueKind }}</span>
-        <strong>{{ valueKind === 'array' ? 'Array' : 'Objeto' }}</strong>
-        <span>{{ itemCount }} {{ itemCount === 1 ? 'item' : 'itens' }}</span>
+        <strong>{{ valueKind === 'array' ? 'Array' : 'Object' }}</strong>
+        <span>{{ itemCount }} {{ itemCount === 1 ? 'item' : 'items' }}</span>
       </summary>
 
       <div class="collection-editor__body">
         <div class="collection-toolbar">
-          <div class="view-switcher" aria-label="Visualização">
+          <div class="view-switcher" aria-label="View">
             <button
               v-for="view in compatibleViews"
               :key="view"
@@ -397,31 +397,31 @@ function viewLabel(view: JsonCollectionView): string {
             </button>
           </div>
           <label class="type-control type-control--collection">
-            <span>Tipo</span>
+            <span>Type</span>
             <select
               :value="valueKind"
-              aria-label="Alterar tipo deste valor"
+              aria-label="Change this value type"
               @change="onCollectionTypeChange"
             >
-              <option value="object">Objeto</option>
+              <option value="object">Object</option>
               <option value="array">Array</option>
-              <option value="string">Texto</option>
-              <option value="number">Número</option>
-              <option value="boolean">Booleano</option>
-              <option value="null">Nulo</option>
+              <option value="string">String</option>
+              <option value="number">Number</option>
+              <option value="boolean">Boolean</option>
+              <option value="null">Null</option>
             </select>
           </label>
         </div>
 
         <template v-if="objectValue">
           <p v-if="!objectCanReorder && objectEntries.length > 1" class="order-note">
-            Chaves numéricas seguem a ordem definida pelo JavaScript e não podem ser movidas visualmente.
+            Numeric keys follow the order defined by JavaScript and cannot be moved visually.
           </p>
 
           <div v-if="objectEntries.length === 0" class="empty-collection">
             <span aria-hidden="true">{ }</span>
-            <strong>Objeto vazio</strong>
-            <p>Adicione a primeira propriedade e escolha o tipo do valor.</p>
+            <strong>Empty object</strong>
+            <p>Add the first property and choose its value type.</p>
           </div>
 
           <div
@@ -439,45 +439,45 @@ function viewLabel(view: JsonCollectionView): string {
             >
               <div class="property-field__heading">
                 <label>
-                  <span class="visually-hidden">Nome da propriedade</span>
+                  <span class="visually-hidden">Property name</span>
                   <input
                     class="property-key"
                     :value="key"
-                    :aria-label="`Renomear propriedade ${key}`"
+                    :aria-label="`Rename property ${key}`"
                     @change="renameProperty($event, key)"
                   />
                 </label>
                 <span class="property-index">{{ index + 1 }}</span>
-                <div class="item-actions" aria-label="Ações da propriedade">
+                <div class="item-actions" aria-label="Property actions">
                   <button
                     class="icon-button"
                     type="button"
                     :disabled="!objectCanReorder || index === 0"
-                    :aria-label="`Mover propriedade ${key} para cima`"
-                    title="Mover para cima"
+                    :aria-label="`Move property ${key} up`"
+                    title="Move up"
                     @click="moveProperty(key, index - 1)"
                   >↑</button>
                   <button
                     class="icon-button"
                     type="button"
                     :disabled="!objectCanReorder || index === objectEntries.length - 1"
-                    :aria-label="`Mover propriedade ${key} para baixo`"
-                    title="Mover para baixo"
+                    :aria-label="`Move property ${key} down`"
+                    title="Move down"
                     @click="moveProperty(key, index + 1)"
                   >↓</button>
                   <button
                     class="icon-button"
                     type="button"
-                    :aria-label="`Duplicar propriedade ${key}`"
-                    title="Duplicar propriedade"
+                    :aria-label="`Duplicate property ${key}`"
+                    title="Duplicate property"
                     @click="duplicateProperty(key)"
                   >⧉</button>
                   <button
                     class="icon-button"
                     type="button"
-                    :aria-label="`Excluir propriedade ${key}`"
-                    title="Excluir propriedade"
-                    @click="requestRemove(childPath(key), `A propriedade “${key}” e todo o seu conteúdo serão removidos.`)"
+                    :aria-label="`Delete property ${key}`"
+                    title="Delete property"
+                    @click="requestRemove(childPath(key), `Property “${key}” and all of its content will be deleted.`)"
                   >×</button>
                 </div>
               </div>
@@ -499,26 +499,26 @@ function viewLabel(view: JsonCollectionView): string {
               type="button"
               @click="addingValue = true"
             >
-              + Adicionar propriedade
+              + Add property
             </button>
             <form v-else class="add-property-form" @submit.prevent="addProperty">
               <label>
-                <span>Nome da propriedade</span>
+                <span>Property name</span>
                 <input v-model="newPropertyKey" />
               </label>
               <label>
-                <span>Tipo do valor</span>
+                <span>Value type</span>
                 <select v-model="newPropertyType">
-                  <option value="string">Texto</option>
-                  <option value="number">Número</option>
-                  <option value="boolean">Booleano</option>
-                  <option value="null">Nulo</option>
-                  <option value="object">Objeto</option>
+                  <option value="string">String</option>
+                  <option value="number">Number</option>
+                  <option value="boolean">Boolean</option>
+                  <option value="null">Null</option>
+                  <option value="object">Object</option>
                   <option value="array">Array</option>
                 </select>
               </label>
-              <button class="mini-button mini-button--primary" type="submit">Adicionar</button>
-              <button class="mini-button" type="button" @click="addingValue = false">Cancelar</button>
+              <button class="mini-button mini-button--primary" type="submit">Add</button>
+              <button class="mini-button" type="button" @click="addingValue = false">Cancel</button>
             </form>
           </div>
         </template>
@@ -526,22 +526,22 @@ function viewLabel(view: JsonCollectionView): string {
         <template v-else-if="arrayValue">
           <div v-if="arrayValue.length === 0" class="empty-collection">
             <span aria-hidden="true">[ ]</span>
-            <strong>Array vazio</strong>
-            <p>Adicione o primeiro item e escolha qual tipo criar.</p>
+            <strong>Empty array</strong>
+            <p>Add the first item and choose its type.</p>
           </div>
 
           <template v-else-if="viewMode === 'table'">
-            <div class="table-scroll" tabindex="0" aria-label="Tabela editável; use rolagem horizontal quando necessário">
+            <div class="table-scroll" tabindex="0" aria-label="Editable table; scroll horizontally when needed">
               <table class="json-table">
-                <caption class="visually-hidden">Array de objetos em formato de tabela editável</caption>
+                <caption class="visually-hidden">Array of objects in an editable table</caption>
                 <thead>
                   <tr>
                     <th scope="col">Item</th>
                     <th v-for="column in arrayShape.columns" :key="column" scope="col">
                       {{ column }}
                     </th>
-                    <th v-if="arrayShape.columns.length === 0" scope="col">Conteúdo</th>
-                    <th scope="col">Ações</th>
+                    <th v-if="arrayShape.columns.length === 0" scope="col">Contents</th>
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -564,32 +564,32 @@ function viewLabel(view: JsonCollectionView): string {
                         @open-details="selectedItemIndex = rowIndex"
                       />
                       <div v-else class="missing-cell">
-                        <span v-if="missingCell !== missingCellId(rowIndex, column)">Ausente</span>
+                        <span v-if="missingCell !== missingCellId(rowIndex, column)">Missing</span>
                         <button
                           v-if="missingCell !== missingCellId(rowIndex, column)"
                           class="mini-button"
                           type="button"
-                          :aria-label="`Criar propriedade ${column} no item ${rowIndex + 1}`"
+                          :aria-label="`Create property ${column} in item ${rowIndex + 1}`"
                           @click="missingCell = missingCellId(rowIndex, column)"
-                        >+ Criar</button>
+                        >+ Create</button>
                         <JsonTypePicker
                           v-else
-                          label="Tipo da célula"
+                          label="Cell type"
                           @select="addMissingCell(rowIndex, column, $event)"
                           @cancel="missingCell = null"
                         />
                       </div>
                     </td>
                     <td v-if="arrayShape.columns.length === 0" class="empty-row-cell">
-                      Objeto sem propriedades
+                      Object with no properties
                     </td>
                     <td class="table-actions">
                       <div class="item-actions item-actions--table">
-                        <button class="icon-button" type="button" :disabled="rowIndex === 0" :aria-label="`Mover item ${rowIndex + 1} para cima`" title="Mover para cima" @click="moveArrayItem(rowIndex, rowIndex - 1)">↑</button>
-                        <button class="icon-button" type="button" :disabled="rowIndex === arrayValue.length - 1" :aria-label="`Mover item ${rowIndex + 1} para baixo`" title="Mover para baixo" @click="moveArrayItem(rowIndex, rowIndex + 1)">↓</button>
-                        <button class="icon-button" type="button" :aria-label="`Duplicar item ${rowIndex + 1}`" title="Duplicar item" @click="duplicateArrayItem(rowIndex)">⧉</button>
-                        <button class="icon-button" type="button" :aria-label="`Abrir detalhes do item ${rowIndex + 1}`" title="Abrir detalhes" @click="selectedItemIndex = rowIndex">…</button>
-                        <button class="icon-button" type="button" :aria-label="`Excluir item ${rowIndex + 1}`" title="Excluir item" @click="requestRemove(childPath(rowIndex), `O item ${rowIndex + 1} e todo o seu conteúdo serão removidos.`)">×</button>
+                        <button class="icon-button" type="button" :disabled="rowIndex === 0" :aria-label="`Move item ${rowIndex + 1} up`" title="Move up" @click="moveArrayItem(rowIndex, rowIndex - 1)">↑</button>
+                        <button class="icon-button" type="button" :disabled="rowIndex === arrayValue.length - 1" :aria-label="`Move item ${rowIndex + 1} down`" title="Move down" @click="moveArrayItem(rowIndex, rowIndex + 1)">↓</button>
+                        <button class="icon-button" type="button" :aria-label="`Duplicate item ${rowIndex + 1}`" title="Duplicate item" @click="duplicateArrayItem(rowIndex)">⧉</button>
+                        <button class="icon-button" type="button" :aria-label="`Open details for item ${rowIndex + 1}`" title="Open details" @click="selectedItemIndex = rowIndex">…</button>
+                        <button class="icon-button" type="button" :aria-label="`Delete item ${rowIndex + 1}`" title="Delete item" @click="requestRemove(childPath(rowIndex), `Item ${rowIndex + 1} and all of its content will be deleted.`)">×</button>
                       </div>
                     </td>
                   </tr>
@@ -597,7 +597,7 @@ function viewLabel(view: JsonCollectionView): string {
               </table>
             </div>
 
-            <div class="table-cards" aria-label="Itens da tabela em cards">
+            <div class="table-cards" aria-label="Table items as cards">
               <article
                 v-for="(row, rowIndex) in arrayValue"
                 :key="rowIndex"
@@ -611,10 +611,10 @@ function viewLabel(view: JsonCollectionView): string {
                   <button
                     class="mini-button"
                     type="button"
-                    :aria-label="`Abrir detalhes do item ${rowIndex + 1}`"
+                    :aria-label="`Open details for item ${rowIndex + 1}`"
                     @click="selectedItemIndex = rowIndex"
                   >
-                    Abrir detalhes
+                    Open details
                   </button>
                 </header>
                 <dl v-if="isJsonObject(row)">
@@ -631,17 +631,17 @@ function viewLabel(view: JsonCollectionView): string {
                       />
                     </dd>
                     <dd v-else class="missing-cell">
-                      <span v-if="missingCell !== missingCellId(rowIndex, column)">Ausente</span>
+                      <span v-if="missingCell !== missingCellId(rowIndex, column)">Missing</span>
                       <button
                         v-if="missingCell !== missingCellId(rowIndex, column)"
                         class="mini-button"
                         type="button"
-                        :aria-label="`Criar propriedade ${column} no item ${rowIndex + 1}`"
+                        :aria-label="`Create property ${column} in item ${rowIndex + 1}`"
                         @click="missingCell = missingCellId(rowIndex, column)"
-                      >+ Criar</button>
+                      >+ Create</button>
                       <JsonTypePicker
                         v-else
-                        label="Tipo da célula"
+                        label="Cell type"
                         @select="addMissingCell(rowIndex, column, $event)"
                         @cancel="missingCell = null"
                       />
@@ -649,10 +649,10 @@ function viewLabel(view: JsonCollectionView): string {
                   </div>
                 </dl>
                 <div class="item-actions">
-                  <button class="mini-button" type="button" :disabled="rowIndex === 0" :aria-label="`Mover item ${rowIndex + 1} para cima`" @click="moveArrayItem(rowIndex, rowIndex - 1)">↑ Subir</button>
-                  <button class="mini-button" type="button" :disabled="rowIndex === arrayValue.length - 1" :aria-label="`Mover item ${rowIndex + 1} para baixo`" @click="moveArrayItem(rowIndex, rowIndex + 1)">↓ Descer</button>
-                  <button class="mini-button" type="button" :aria-label="`Duplicar item ${rowIndex + 1}`" @click="duplicateArrayItem(rowIndex)">⧉ Duplicar</button>
-                  <button class="mini-button mini-button--danger" type="button" :aria-label="`Excluir item ${rowIndex + 1}`" @click="requestRemove(childPath(rowIndex), `O item ${rowIndex + 1} e todo o seu conteúdo serão removidos.`)">Excluir</button>
+                  <button class="mini-button" type="button" :disabled="rowIndex === 0" :aria-label="`Move item ${rowIndex + 1} up`" @click="moveArrayItem(rowIndex, rowIndex - 1)">↑ Move up</button>
+                  <button class="mini-button" type="button" :disabled="rowIndex === arrayValue.length - 1" :aria-label="`Move item ${rowIndex + 1} down`" @click="moveArrayItem(rowIndex, rowIndex + 1)">↓ Move down</button>
+                  <button class="mini-button" type="button" :aria-label="`Duplicate item ${rowIndex + 1}`" @click="duplicateArrayItem(rowIndex)">⧉ Duplicate</button>
+                  <button class="mini-button mini-button--danger" type="button" :aria-label="`Delete item ${rowIndex + 1}`" @click="requestRemove(childPath(rowIndex), `Item ${rowIndex + 1} and all of its content will be deleted.`)">Delete</button>
                 </div>
               </article>
             </div>
@@ -674,10 +674,10 @@ function viewLabel(view: JsonCollectionView): string {
               <div class="array-item__heading">
                 <span>Item {{ index + 1 }}</span>
                 <div class="item-actions">
-                  <button class="icon-button" type="button" :disabled="index === 0" :aria-label="`Mover item ${index + 1} para cima`" title="Mover para cima" @click="moveArrayItem(index, index - 1)">↑</button>
-                  <button class="icon-button" type="button" :disabled="index === arrayValue.length - 1" :aria-label="`Mover item ${index + 1} para baixo`" title="Mover para baixo" @click="moveArrayItem(index, index + 1)">↓</button>
-                  <button class="icon-button" type="button" :aria-label="`Duplicar item ${index + 1}`" title="Duplicar item" @click="duplicateArrayItem(index)">⧉</button>
-                  <button class="icon-button" type="button" :aria-label="`Excluir item ${index + 1}`" title="Excluir item" @click="requestRemove(childPath(index), `O item ${index + 1} e todo o seu conteúdo serão removidos.`)">×</button>
+                  <button class="icon-button" type="button" :disabled="index === 0" :aria-label="`Move item ${index + 1} up`" title="Move up" @click="moveArrayItem(index, index - 1)">↑</button>
+                  <button class="icon-button" type="button" :disabled="index === arrayValue.length - 1" :aria-label="`Move item ${index + 1} down`" title="Move down" @click="moveArrayItem(index, index + 1)">↓</button>
+                  <button class="icon-button" type="button" :aria-label="`Duplicate item ${index + 1}`" title="Duplicate item" @click="duplicateArrayItem(index)">⧉</button>
+                  <button class="icon-button" type="button" :aria-label="`Delete item ${index + 1}`" title="Delete item" @click="requestRemove(childPath(index), `Item ${index + 1} and all of its content will be deleted.`)">×</button>
                 </div>
               </div>
               <JsonValueEditor
@@ -698,11 +698,11 @@ function viewLabel(view: JsonCollectionView): string {
               type="button"
               @click="addingValue = true"
             >
-              + Adicionar item
+              + Add item
             </button>
             <JsonTypePicker
               v-else
-              label="Tipo do novo item"
+              label="New item type"
               @select="appendItem"
               @cancel="addingValue = false"
             />
@@ -718,10 +718,10 @@ function viewLabel(view: JsonCollectionView): string {
       @close="selectedItemIndex = null"
     >
       <div class="detail-panel-actions">
-        <button class="mini-button" type="button" :disabled="selectedItemIndex === 0" @click="moveArrayItem(selectedItemIndex, selectedItemIndex - 1)">↑ Mover para cima</button>
-        <button class="mini-button" type="button" :disabled="selectedItemIndex === (arrayValue?.length ?? 0) - 1" @click="moveArrayItem(selectedItemIndex, selectedItemIndex + 1)">↓ Mover para baixo</button>
-        <button class="mini-button" type="button" @click="duplicateArrayItem(selectedItemIndex)">⧉ Duplicar</button>
-        <button class="mini-button mini-button--danger" type="button" @click="requestRemove(childPath(selectedItemIndex), `O item ${selectedItemIndex + 1} e todo o seu conteúdo serão removidos.`)">Excluir</button>
+        <button class="mini-button" type="button" :disabled="selectedItemIndex === 0" @click="moveArrayItem(selectedItemIndex, selectedItemIndex - 1)">↑ Move up</button>
+        <button class="mini-button" type="button" :disabled="selectedItemIndex === (arrayValue?.length ?? 0) - 1" @click="moveArrayItem(selectedItemIndex, selectedItemIndex + 1)">↓ Move down</button>
+        <button class="mini-button" type="button" @click="duplicateArrayItem(selectedItemIndex)">⧉ Duplicate</button>
+        <button class="mini-button mini-button--danger" type="button" @click="requestRemove(childPath(selectedItemIndex), `Item ${selectedItemIndex + 1} and all of its content will be deleted.`)">Delete</button>
       </div>
       <JsonValueEditor
         :value="selectedItem"

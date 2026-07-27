@@ -10,79 +10,92 @@ import type { JsonValue } from './types'
 
 describe('serializeJson', () => {
   it.each<JsonValue>([
-    { nome: 'Projeto' },
+    { name: 'Project' },
     [{ id: 1 }, { id: 2 }],
-    'texto',
+    'text',
     42,
     true,
     null,
     {},
     [],
-    { 'nome completo': 'Ada', 'config.versao': 1 },
-  ])('preserva valor e tipos no ciclo de exportação %#', (value) => {
+    { 'full name': 'Ada', 'config.version': 1 },
+  ])('preserves values and types through export cycle %#', (value) => {
     expect(JSON.parse(serializeJson(value))).toEqual(value)
   })
 
-  it('formata o documento com dois espaços por padrão', () => {
-    expect(serializeJson({ ativo: true })).toBe('{\n  "ativo": true\n}')
+  it('formats the document with two spaces by default', () => {
+    expect(serializeJson({ active: true })).toBe('{\n  "active": true\n}')
   })
 
-  it('exporta em formato compacto quando solicitado', () => {
-    expect(serializeJson({ ativo: true }, 'compact')).toBe('{"ativo":true}')
+  it('exports compact JSON when requested', () => {
+    expect(serializeJson({ active: true }, 'compact')).toBe('{"active":true}')
   })
 })
 
 describe('getJsonDownloadName', () => {
-  it('preserva nomes que já terminam em .json', () => {
-    expect(getJsonDownloadName('dados.JSON')).toBe('dados.JSON')
+  it('preserves names that already end in .json', () => {
+    expect(getJsonDownloadName('data.JSON')).toBe('data.JSON')
   })
 
-  it('adiciona a extensão quando necessário', () => {
-    expect(getJsonDownloadName('dados')).toBe('dados.json')
+  it('adds the extension when needed', () => {
+    expect(getJsonDownloadName('data')).toBe('data.json')
   })
 
-  it('usa um nome seguro quando o nome está vazio', () => {
-    expect(getJsonDownloadName('  ')).toBe('documento.json')
+  it('uses a safe name when the name is empty', () => {
+    expect(getJsonDownloadName('  ')).toBe('document.json')
   })
 })
 
-describe('exportação final', () => {
-  it('prepara JSON formatado com dois espaços', () => {
-    expect(prepareJsonExport({ ativo: true }, 'formatted')).toEqual({
+describe('final export', () => {
+  it('prepares formatted JSON with two spaces', () => {
+    expect(prepareJsonExport({ active: true }, 'formatted')).toEqual({
       ok: true,
-      contents: '{\n  "ativo": true\n}',
+      contents: '{\n  "active": true\n}',
     })
   })
 
-  it('prepara JSON compacto', () => {
-    expect(prepareJsonExport({ ativo: true }, 'compact')).toEqual({
+  it('prepares compact JSON', () => {
+    expect(prepareJsonExport({ active: true }, 'compact')).toEqual({
       ok: true,
-      contents: '{"ativo":true}',
+      contents: '{"active":true}',
     })
   })
 
-  it('sugere um nome editado baseado no arquivo original', () => {
-    expect(getEditedJsonDownloadName('arquivo.json')).toBe('arquivo-editado.json')
-    expect(getEditedJsonDownloadName('DADOS.JSON')).toBe('DADOS-editado.json')
-    expect(getEditedJsonDownloadName('  ')).toBe('documento-editado.json')
+  it('suggests an edited name based on the original file', () => {
+    expect(getEditedJsonDownloadName('file.json')).toBe('file-edited.json')
+    expect(getEditedJsonDownloadName('DATA.JSON')).toBe('DATA-edited.json')
+    expect(getEditedJsonDownloadName('  ')).toBe('document-edited.json')
   })
 
-  it('bloqueia estados internos inválidos antes da serialização', () => {
+  it('blocks invalid internal states before serialization', () => {
     expect(prepareJsonExport(Number.NaN as JsonValue, 'compact')).toMatchObject({ ok: false })
-    expect(prepareJsonExport({ valor: undefined } as unknown as JsonValue)).toMatchObject({
+    expect(prepareJsonExport({ value: undefined } as unknown as JsonValue)).toMatchObject({
       ok: false,
     })
   })
 
-  it('não acrescenta metadados de interface, histórico ou busca', () => {
-    const value: JsonValue = { id: 1, url: 'https://exemplo.test/imagem.png', dados: [true] }
+  it('does not add interface, history, or search metadata', () => {
+    const value: JsonValue = { id: 1, url: 'https://example.test/image.png', data: [true] }
     const result = prepareJsonExport(value, 'compact')
 
     expect(result).toEqual({
       ok: true,
-      contents: '{"id":1,"url":"https://exemplo.test/imagem.png","dados":[true]}',
+      contents: '{"id":1,"url":"https://example.test/image.png","data":[true]}',
     })
     if (!result.ok) return
     expect(result.contents).not.toMatch(/history|selection|search|internal|__meta/i)
+  })
+
+  it('preserves user-provided Portuguese content exactly', () => {
+    const value: JsonValue = {
+      titulo: 'Maquete residencial',
+      descricao: 'Projeto criado em Curitiba',
+    }
+
+    const result = prepareJsonExport(value, 'compact')
+    expect(result).toEqual({
+      ok: true,
+      contents: '{"titulo":"Maquete residencial","descricao":"Projeto criado em Curitiba"}',
+    })
   })
 })

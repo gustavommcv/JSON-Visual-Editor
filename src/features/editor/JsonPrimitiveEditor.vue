@@ -36,7 +36,7 @@ function onNumberChange(event: Event): void {
     !Number.isFinite(number) ||
     (Number.isInteger(number) && !Number.isSafeInteger(number))
   ) {
-    numberError.value = 'Informe um número válido dentro da faixa segura.'
+    numberError.value = 'Enter a valid number within the safe range.'
     return
   }
 
@@ -81,17 +81,17 @@ function onTypeChange(event: Event): void {
         @change="onBooleanChange"
       />
       <span class="boolean-control__track" aria-hidden="true"><span></span></span>
-      <span>{{ value ? 'Verdadeiro' : 'Falso' }}</span>
+      <span>{{ value ? 'True' : 'False' }}</span>
     </label>
 
     <label class="type-control">
-      <span>Tipo</span>
-      <select :value="valueType" :aria-label="`Alterar tipo de ${label}`" @change="onTypeChange">
-        <option value="string">Texto</option>
-        <option value="number">Número</option>
-        <option value="boolean">Booleano</option>
-        <option value="null">Nulo</option>
-        <option value="object">Objeto</option>
+      <span>Type</span>
+      <select :value="valueType" :aria-label="`Change the type of ${label}`" @change="onTypeChange">
+        <option value="string">String</option>
+        <option value="number">Number</option>
+        <option value="boolean">Boolean</option>
+        <option value="null">Null</option>
+        <option value="object">Object</option>
         <option value="array">Array</option>
       </select>
     </label>

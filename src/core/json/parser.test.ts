@@ -4,43 +4,46 @@ import { parseJson } from './parser'
 
 describe('parseJson', () => {
   it.each([
-    ['objeto', '{"nome":"Projeto"}', { nome: 'Projeto' }],
+    ['object', '{"name":"Project"}', { name: 'Project' }],
     ['array', '[{"id":1},{"id":2}]', [{ id: 1 }, { id: 2 }]],
-    ['texto', '"texto"', 'texto'],
-    ['número', '42', 42],
-    ['booleano', 'true', true],
-    ['nulo', 'null', null],
-    ['objeto vazio', '{}', {}],
-    ['array vazio', '[]', []],
-  ])('importa uma raiz do tipo %s', (_label, source, expected) => {
+    ['string', '"text"', 'text'],
+    ['number', '42', 42],
+    ['boolean', 'true', true],
+    ['null', 'null', null],
+    ['empty object', '{}', {}],
+    ['empty array', '[]', []],
+  ])('imports a %s root', (_label, source, expected) => {
     expect(parseJson(source)).toEqual({ ok: true, value: expected })
   })
 
-  it('preserva propriedades com espaço e ponto', () => {
-    const source = '{"nome completo":"Ada","config.versao":1}'
+  it('preserves properties with spaces and dots', () => {
+    const source = '{"full name":"Ada","config.version":1}'
 
     expect(parseJson(source)).toEqual({
       ok: true,
-      value: { 'nome completo': 'Ada', 'config.versao': 1 },
+      value: { 'full name': 'Ada', 'config.version': 1 },
     })
   })
 
-  it('rejeita arquivo vazio', () => {
+  it('rejects an empty file', () => {
     expect(parseJson('  \n\t ')).toMatchObject({
       ok: false,
       error: { code: 'empty-file' },
     })
   })
 
-  it('rejeita JSON malformado', () => {
-    expect(parseJson('{"nome":}')).toMatchObject({
+  it('rejects malformed JSON with an English error', () => {
+    const result = parseJson('{"name":}')
+    expect(result).toMatchObject({
       ok: false,
       error: { code: 'invalid-json' },
     })
+    if (result.ok) return
+    expect(result.error.message).toContain('The selected file is not valid JSON')
   })
 
   it.each(['9007199254740992', '-9007199254740992', '{"id": 1e20}'])(
-    'rejeita inteiro fora da faixa segura: %s',
+    'rejects an integer outside the safe range: %s',
     (source) => {
       expect(parseJson(source)).toMatchObject({
         ok: false,
@@ -49,17 +52,29 @@ describe('parseJson', () => {
     },
   )
 
-  it('não confunde dígitos dentro de textos com números inseguros', () => {
+  it('does not confuse digits inside strings with unsafe numbers', () => {
     expect(parseJson('"9007199254740992"')).toEqual({
       ok: true,
       value: '9007199254740992',
     })
   })
 
-  it('rejeita números infinitos para o runtime do navegador', () => {
+  it('rejects numbers that become infinite in the browser runtime', () => {
     expect(parseJson('1e400')).toMatchObject({
       ok: false,
       error: { code: 'unsupported-number' },
+    })
+  })
+
+  it('preserves user-provided Portuguese property names and values exactly', () => {
+    const source = '{"titulo":"Maquete residencial","descricao":"Projeto criado em Curitiba"}'
+
+    expect(parseJson(source)).toEqual({
+      ok: true,
+      value: {
+        titulo: 'Maquete residencial',
+        descricao: 'Projeto criado em Curitiba',
+      },
     })
   })
 })

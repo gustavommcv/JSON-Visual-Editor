@@ -36,14 +36,14 @@ const { trapFocus } = useDialogFocus(dialog, closeButton)
       >
         <header>
           <div>
-            <p class="eyebrow">Download local</p>
-            <h2 :id="titleId">Exportar JSON</h2>
+            <p class="eyebrow">Local download</p>
+            <h2 :id="titleId">Download JSON</h2>
           </div>
           <button
             ref="closeButton"
             class="icon-button"
             type="button"
-            aria-label="Fechar exportação"
+            aria-label="Close download dialog"
             @click="emit('close')"
           >
             ×
@@ -52,39 +52,39 @@ const { trapFocus } = useDialogFocus(dialog, closeButton)
 
         <dl class="export-summary">
           <div>
-            <dt>Arquivo sugerido</dt>
+            <dt>Suggested file name</dt>
             <dd><code>{{ fileName }}</code></dd>
           </div>
           <div>
-            <dt>Comparação com o original</dt>
-            <dd>{{ changeCount }} {{ changeCount === 1 ? 'mudança' : 'mudanças' }}</dd>
+            <dt>Changes from the original</dt>
+            <dd>{{ changeCount }} {{ changeCount === 1 ? 'change' : 'changes' }}</dd>
           </div>
         </dl>
 
         <fieldset class="format-options">
-          <legend>Formato do arquivo</legend>
+          <legend>File format</legend>
           <label>
             <input v-model="formatting" type="radio" value="formatted" />
-            <span><strong>Formatado</strong><small>Recuo de dois espaços, fácil de ler.</small></span>
+            <span><strong>Formatted</strong><small>Two-space indentation for easy reading.</small></span>
           </label>
           <label>
             <input v-model="formatting" type="radio" value="compact" />
-            <span><strong>Compacto</strong><small>Sem espaços extras, arquivo menor.</small></span>
+            <span><strong>Compact</strong><small>No extra spaces for a smaller file.</small></span>
           </label>
         </fieldset>
 
         <p v-if="exportError" class="export-blocked" role="alert">{{ exportError }}</p>
-        <p class="export-privacy">O arquivo contém somente o JSON atual. O documento e o histórico permanecem nesta aba após o download.</p>
+        <p class="export-privacy">The file contains only the current JSON. Your document and history stay in this tab after the download.</p>
 
         <div class="export-dialog__actions">
-          <button class="button button--quiet" type="button" @click="emit('close')">Cancelar</button>
+          <button class="button button--quiet" type="button" @click="emit('close')">Cancel</button>
           <button
             class="button button--primary"
             type="button"
             :disabled="!canExport"
             @click="emit('download', formatting)"
           >
-            Baixar JSON
+            Download JSON
           </button>
         </div>
       </section>

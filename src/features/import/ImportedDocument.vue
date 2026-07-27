@@ -18,41 +18,41 @@ const emit = defineEmits<{
     <div class="document-card__topline">
       <span class="status-badge" :class="{ 'status-badge--dirty': hasUnexportedChanges }">
         <span aria-hidden="true">{{ hasUnexportedChanges ? '•' : '✓' }}</span>
-        {{ hasUnexportedChanges ? 'Alterações não exportadas' : 'Arquivo pronto' }}
+        {{ hasUnexportedChanges ? 'Unexported changes' : 'File ready' }}
       </span>
       <button class="button button--quiet" type="button" @click="emit('remove')">
-        Remover arquivo
+        Remove file
       </button>
     </div>
 
     <div class="document-card__identity">
       <div class="file-mark" aria-hidden="true">{ }</div>
       <div class="document-card__name">
-        <p class="eyebrow">Documento importado</p>
+        <p class="eyebrow">Imported document</p>
         <h2 id="document-title">{{ fileName }}</h2>
       </div>
     </div>
 
     <dl class="summary-grid">
       <div>
-        <dt>Raiz detectada</dt>
+        <dt>Detected root</dt>
         <dd>{{ summary.label }}</dd>
       </div>
       <div>
-        <dt>Conteúdo</dt>
+        <dt>Contents</dt>
         <dd>{{ summary.detail }}</dd>
       </div>
       <div>
-        <dt>Processamento</dt>
-        <dd>Somente local</dd>
+        <dt>Processing</dt>
+        <dd>Local only</dd>
       </div>
     </dl>
 
     <div class="stage-note">
       <span class="stage-note__number">05</span>
       <div>
-        <strong>Editor recursivo ativo</strong>
-        <p>Edite valores e estruturas abaixo. Tudo continua somente nesta aba.</p>
+        <strong>Recursive editor ready</strong>
+        <p>Edit values and structures below. Everything stays in this browser tab.</p>
       </div>
     </div>
 
@@ -60,9 +60,9 @@ const emit = defineEmits<{
 
     <div class="document-card__actions">
       <button class="button button--primary" type="button" @click="emit('download')">
-        Configurar download
+        Download JSON
       </button>
-      <p>O download inclui as alterações atuais e preserva os tipos JSON.</p>
+      <p>The download includes your current changes and preserves JSON types.</p>
     </div>
   </section>
 </template>

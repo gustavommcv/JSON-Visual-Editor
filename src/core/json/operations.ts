@@ -85,7 +85,7 @@ function validateNumbers(value: JsonValue): JsonOperationError | null {
     if (!Number.isFinite(value) || (Number.isInteger(value) && !Number.isSafeInteger(value))) {
       return {
         code: 'invalid-number',
-        message: 'Use um número finito dentro da faixa segura do JavaScript.',
+        message: "Use a finite number within JavaScript's safe range.",
       }
     }
     return null
@@ -119,7 +119,7 @@ export function getJsonValueAtPath(root: JsonValue, path: JsonPath): JsonAccessR
           ok: false,
           error: {
             code: 'invalid-path',
-            message: `O índice ${segment} não existe no caminho informado.`,
+            message: `Index ${segment} does not exist at the given path.`,
           },
         }
       }
@@ -127,7 +127,7 @@ export function getJsonValueAtPath(root: JsonValue, path: JsonPath): JsonAccessR
       if (nextValue === undefined) {
         return {
           ok: false,
-          error: { code: 'invalid-path', message: 'O caminho informado não existe.' },
+          error: { code: 'invalid-path', message: 'The given path does not exist.' },
         }
       }
       current = nextValue
@@ -139,7 +139,7 @@ export function getJsonValueAtPath(root: JsonValue, path: JsonPath): JsonAccessR
         ok: false,
         error: {
           code: 'invalid-path',
-          message: `A propriedade “${segment}” não existe no caminho informado.`,
+          message: `Property “${segment}” does not exist at the given path.`,
         },
       }
     }
@@ -147,7 +147,7 @@ export function getJsonValueAtPath(root: JsonValue, path: JsonPath): JsonAccessR
     if (nextValue === undefined) {
       return {
         ok: false,
-        error: { code: 'invalid-path', message: 'O caminho informado não existe.' },
+        error: { code: 'invalid-path', message: 'The given path does not exist.' },
       }
     }
     current = nextValue
@@ -169,12 +169,12 @@ function replaceAtPath(
 
   if (typeof segment === 'number') {
     if (!Array.isArray(current) || segment < 0 || segment >= current.length) {
-      return operationError('invalid-path', `O índice ${segment} não existe no caminho informado.`)
+      return operationError('invalid-path', `Index ${segment} does not exist at the given path.`)
     }
 
     const child = current[segment]
     if (child === undefined) {
-      return operationError('invalid-path', 'O caminho informado não existe.')
+      return operationError('invalid-path', 'The given path does not exist.')
     }
 
     const childResult = replaceAtPath(child, path, position + 1, replacement)
@@ -188,13 +188,13 @@ function replaceAtPath(
   if (!isJsonObject(current) || !hasOwn(current, segment)) {
     return operationError(
       'invalid-path',
-      `A propriedade “${segment}” não existe no caminho informado.`,
+      `Property “${segment}” does not exist at the given path.`,
     )
   }
 
   const child = current[segment]
   if (child === undefined) {
-    return operationError('invalid-path', 'O caminho informado não existe.')
+    return operationError('invalid-path', 'The given path does not exist.')
   }
 
   const childResult = replaceAtPath(child, path, position + 1, replacement)
@@ -249,11 +249,11 @@ export function renameJsonProperty(
   if (!access.ok) return access
 
   if (!isJsonObject(access.value)) {
-    return operationError('invalid-container', 'A renomeação só pode ser feita em um objeto.')
+    return operationError('invalid-container', 'Properties can only be renamed inside an object.')
   }
 
   if (!hasOwn(access.value, previousKey)) {
-    return operationError('missing-key', `A propriedade “${previousKey}” não existe.`)
+    return operationError('missing-key', `Property “${previousKey}” does not exist.`)
   }
 
   if (previousKey === nextKey) return { ok: true, value: root }
@@ -261,7 +261,7 @@ export function renameJsonProperty(
   if (hasOwn(access.value, nextKey)) {
     return operationError(
       'duplicate-key',
-      `A propriedade “${nextKey}” já existe. Escolha outro nome.`,
+      `Property “${nextKey}” already exists. Choose another name.`,
     )
   }
 
@@ -285,11 +285,11 @@ export function addJsonProperty(
   if (!access.ok) return access
 
   if (!isJsonObject(access.value)) {
-    return operationError('invalid-container', 'Só é possível adicionar propriedades a objetos.')
+    return operationError('invalid-container', 'Properties can only be added to objects.')
   }
 
   if (hasOwn(access.value, key)) {
-    return operationError('duplicate-key', `A propriedade “${key}” já existe.`)
+    return operationError('duplicate-key', `Property “${key}” already exists.`)
   }
 
   return setJsonValue(root, objectPath, {
@@ -307,7 +307,7 @@ export function appendJsonArrayItem(
   if (!access.ok) return access
 
   if (!Array.isArray(access.value)) {
-    return operationError('invalid-container', 'Só é possível adicionar itens a arrays.')
+    return operationError('invalid-container', 'Items can only be added to arrays.')
   }
 
   return setJsonValue(root, arrayPath, [...access.value, createJsonValue(valueType)])
@@ -322,12 +322,12 @@ export function duplicateJsonArrayItem(
   if (!access.ok) return access
 
   if (!Array.isArray(access.value)) {
-    return operationError('invalid-container', 'Só é possível duplicar itens de arrays.')
+    return operationError('invalid-container', 'Items can only be duplicated in arrays.')
   }
 
   const item = access.value[index]
   if (!Number.isInteger(index) || index < 0 || item === undefined) {
-    return operationError('invalid-index', `O item ${index + 1} não existe.`)
+    return operationError('invalid-index', `Item ${index + 1} does not exist.`)
   }
 
   const copy = [...access.value]
@@ -336,7 +336,7 @@ export function duplicateJsonArrayItem(
 }
 
 export function createUniquePropertyName(object: JsonObject, sourceKey: string): string {
-  const baseName = `${sourceKey} (cópia)`
+  const baseName = `${sourceKey} (copy)`
   if (!hasOwn(object, baseName)) return baseName
 
   let suffix = 2
@@ -353,12 +353,12 @@ export function duplicateJsonProperty(
   if (!access.ok) return access
 
   if (!isJsonObject(access.value)) {
-    return operationError('invalid-container', 'Só é possível duplicar propriedades de objetos.')
+    return operationError('invalid-container', 'Properties can only be duplicated in objects.')
   }
 
   const sourceValue = access.value[key]
   if (!hasOwn(access.value, key) || sourceValue === undefined) {
-    return operationError('missing-key', `A propriedade “${key}” não existe.`)
+    return operationError('missing-key', `Property “${key}” does not exist.`)
   }
 
   const duplicateKey = createUniquePropertyName(access.value, key)
@@ -379,7 +379,7 @@ export function moveJsonArrayItem(
   if (!access.ok) return access
 
   if (!Array.isArray(access.value)) {
-    return operationError('invalid-container', 'Só é possível reordenar itens de arrays.')
+    return operationError('invalid-container', 'Items can only be reordered in arrays.')
   }
 
   if (
@@ -390,7 +390,7 @@ export function moveJsonArrayItem(
     fromIndex >= access.value.length ||
     toIndex >= access.value.length
   ) {
-    return operationError('invalid-index', 'A posição informada não existe no array.')
+    return operationError('invalid-index', 'The given position does not exist in the array.')
   }
 
   if (fromIndex === toIndex) return { ok: true, value: root }
@@ -398,7 +398,7 @@ export function moveJsonArrayItem(
   const copy = [...access.value]
   const [item] = copy.splice(fromIndex, 1)
   if (item === undefined) {
-    return operationError('invalid-index', 'O item informado não existe no array.')
+    return operationError('invalid-index', 'The given item does not exist in the array.')
   }
   copy.splice(toIndex, 0, item)
   return setJsonValue(root, arrayPath, copy)
@@ -414,31 +414,31 @@ export function moveJsonProperty(
   if (!access.ok) return access
 
   if (!isJsonObject(access.value)) {
-    return operationError('invalid-container', 'Só é possível reordenar propriedades de objetos.')
+    return operationError('invalid-container', 'Properties can only be reordered in objects.')
   }
 
   if (!canReorderJsonObject(access.value)) {
     return operationError(
       'unsupported-order',
-      'Este objeto contém chaves numéricas, cuja ordem de apresentação é controlada pelo JavaScript.',
+      'This object contains numeric keys whose display order is controlled by JavaScript.',
     )
   }
 
   const entries = Object.entries(access.value)
   const fromIndex = entries.findIndex(([entryKey]) => entryKey === key)
   if (fromIndex < 0) {
-    return operationError('missing-key', `A propriedade “${key}” não existe.`)
+    return operationError('missing-key', `Property “${key}” does not exist.`)
   }
 
   if (!Number.isInteger(toIndex) || toIndex < 0 || toIndex >= entries.length) {
-    return operationError('invalid-index', 'A posição informada não existe no objeto.')
+    return operationError('invalid-index', 'The given position does not exist in the object.')
   }
 
   if (fromIndex === toIndex) return { ok: true, value: root }
 
   const [entry] = entries.splice(fromIndex, 1)
   if (entry === undefined) {
-    return operationError('missing-key', `A propriedade “${key}” não existe.`)
+    return operationError('missing-key', `Property “${key}” does not exist.`)
   }
   entries.splice(toIndex, 0, entry)
   return setJsonValue(root, objectPath, Object.fromEntries(entries) as JsonObject)
@@ -448,7 +448,7 @@ export function removeJsonValue(root: JsonValue, path: JsonPath): JsonOperationR
   if (path.length === 0) {
     return operationError(
       'cannot-remove-root',
-      'A raiz não pode ser removida. Altere o tipo ou o valor em vez disso.',
+      'The root cannot be removed. Change its type or value instead.',
     )
   }
 
@@ -457,12 +457,12 @@ export function removeJsonValue(root: JsonValue, path: JsonPath): JsonOperationR
   const access = getJsonValueAtPath(root, parentPath)
   if (!access.ok) return access
   if (segment === undefined) {
-    return operationError('invalid-path', 'O caminho informado não existe.')
+    return operationError('invalid-path', 'The given path does not exist.')
   }
 
   if (typeof segment === 'number') {
     if (!Array.isArray(access.value) || segment < 0 || segment >= access.value.length) {
-      return operationError('invalid-path', `O índice ${segment} não existe.`)
+      return operationError('invalid-path', `Index ${segment} does not exist.`)
     }
     const copy = [...access.value]
     copy.splice(segment, 1)
@@ -470,7 +470,7 @@ export function removeJsonValue(root: JsonValue, path: JsonPath): JsonOperationR
   }
 
   if (!isJsonObject(access.value) || !hasOwn(access.value, segment)) {
-    return operationError('invalid-path', `A propriedade “${segment}” não existe.`)
+    return operationError('invalid-path', `Property “${segment}” does not exist.`)
   }
 
   const copy: JsonObject = { ...access.value }

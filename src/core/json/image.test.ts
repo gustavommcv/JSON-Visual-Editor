@@ -8,10 +8,10 @@ import {
 
 describe('detectImageCandidate', () => {
   it.each([
-    'https://example.com/foto.jpg',
-    'http://cdn.example.com/imagem.WEBP',
-    'https://example.com/caminho/arte.svg',
-  ])('detecta URL comum de imagem: %s', (value) => {
+    'https://example.com/photo.jpg',
+    'http://cdn.example.com/image.WEBP',
+    'https://example.com/path/art.svg',
+  ])('detects a common image URL: %s', (value) => {
     expect(detectImageCandidate(value)).toMatchObject({
       source: value,
       kind: 'remote',
@@ -19,12 +19,12 @@ describe('detectImageCandidate', () => {
     })
   })
 
-  it('detecta extensão antes da query string', () => {
-    const value = 'https://example.com/foto.png?width=640&token=abc#preview'
+  it('detects the extension before the query string', () => {
+    const value = 'https://example.com/photo.png?width=640&token=abc#preview'
     expect(detectImageCandidate(value)).toMatchObject({ source: value, kind: 'remote' })
   })
 
-  it('aceita data image raster de tamanho razoável', () => {
+  it('accepts a reasonably sized raster data image', () => {
     const value = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=='
     expect(detectImageCandidate(value)).toEqual({
       source: value,
@@ -34,28 +34,28 @@ describe('detectImageCandidate', () => {
   })
 
   it.each([
-    'não é uma url',
-    'https://example.com/documento.pdf',
-    'https://example.com/pagina-sem-extensao',
-    'ftp://example.com/foto.png',
+    'not a url',
+    'https://example.com/document.pdf',
+    'https://example.com/page-without-extension',
+    'ftp://example.com/photo.png',
     'data:image/svg+xml,<svg></svg>',
-  ])('rejeita valor que não deve ser pré-visualizado: %s', (value) => {
+  ])('rejects a value that should not be previewed: %s', (value) => {
     expect(detectImageCandidate(value)).toBeNull()
   })
 
-  it('rejeita data image excessivamente grande', () => {
+  it('rejects an excessively large data image', () => {
     const value = `data:image/png;base64,${'A'.repeat(MAX_DATA_IMAGE_LENGTH)}`
     expect(detectImageCandidate(value)).toBeNull()
   })
 
-  it('representa falha de carregamento sem reclassificar ou alterar a URL', () => {
-    const value = 'https://example.com/indisponivel.jpg'
+  it('represents a loading failure without reclassifying or changing the URL', () => {
+    const value = 'https://example.com/unavailable.jpg'
     expect(getImagePreviewState(value, false)).toBe('ready')
     expect(getImagePreviewState(value, true)).toBe('error')
-    expect(value).toBe('https://example.com/indisponivel.jpg')
+    expect(value).toBe('https://example.com/unavailable.jpg')
   })
 
-  it('mantém string comum sem pré-visualização', () => {
-    expect(getImagePreviewState('foto de férias', false)).toBe('hidden')
+  it('keeps an ordinary string hidden from the preview', () => {
+    expect(getImagePreviewState('vacation photo', false)).toBe('hidden')
   })
 })

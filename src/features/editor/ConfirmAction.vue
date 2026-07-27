@@ -39,13 +39,13 @@ const { trapFocus } = useDialogFocus(dialog, cancelButton)
           <h2 :id="titleId">{{ title }}</h2>
           <p>{{ description }}</p>
           <div class="affected-path">
-            <span>Caminho afetado</span>
+            <span>Affected path</span>
             <code>{{ formatJsonPath(path) }}</code>
           </div>
         </div>
         <div class="confirmation-dialog__actions">
           <button ref="cancelButton" class="button button--quiet" type="button" @click="emit('cancel')">
-            Cancelar
+            Cancel
           </button>
           <button class="button button--danger" type="button" @click="emit('confirm')">
             {{ confirmLabel }}

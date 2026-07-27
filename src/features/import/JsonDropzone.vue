@@ -52,7 +52,7 @@ function onDrop(event: DragEvent): void {
     role="button"
     tabindex="0"
     :aria-busy="busy"
-    aria-label="Selecionar ou soltar um arquivo JSON"
+    aria-label="Choose or drop a JSON file"
     @click="openFilePicker"
     @keydown.enter.prevent="openFilePicker"
     @keydown.space.prevent="openFilePicker"
@@ -76,9 +76,9 @@ function onDrop(event: DragEvent): void {
       <span>}</span>
     </div>
     <p class="dropzone__title">
-      {{ busy ? 'Lendo seu arquivo…' : isDragging ? 'Solte o arquivo aqui' : 'Arraste seu JSON para cá' }}
+      {{ busy ? 'Reading your file…' : isDragging ? 'Drop the file here' : 'Drag your JSON file here' }}
     </p>
-    <p class="dropzone__hint">ou <span>selecione no seu dispositivo</span></p>
-    <p class="dropzone__format">Um arquivo .json por vez</p>
+    <p class="dropzone__hint">or <span>choose a JSON file</span></p>
+    <p class="dropzone__format">One .json file at a time</p>
   </div>
 </template>

@@ -25,144 +25,145 @@ function expectValue(result: ReturnType<typeof setJsonValue>): JsonValue {
   return result.value
 }
 
-describe('operações JSON por caminho', () => {
-  it('acessa e altera objetos aninhados sem modificar a origem', () => {
-    const source: JsonValue = { projeto: { nome: 'Antigo', ativo: true } }
-    const result = setJsonValue(source, ['projeto', 'nome'], 'Novo')
+describe('path-based JSON operations', () => {
+  it('accesses and changes nested objects without modifying the source', () => {
+    const source: JsonValue = { project: { name: 'Old', active: true } }
+    const result = setJsonValue(source, ['project', 'name'], 'New')
 
-    expect(expectValue(result)).toEqual({ projeto: { nome: 'Novo', ativo: true } })
-    expect(source).toEqual({ projeto: { nome: 'Antigo', ativo: true } })
-    expect(getJsonValueAtPath(expectValue(result), ['projeto', 'nome'])).toEqual({
+    expect(expectValue(result)).toEqual({ project: { name: 'New', active: true } })
+    expect(source).toEqual({ project: { name: 'Old', active: true } })
+    expect(getJsonValueAtPath(expectValue(result), ['project', 'name'])).toEqual({
       ok: true,
-      value: 'Novo',
+      value: 'New',
     })
   })
 
-  it('altera arrays aninhados por índice', () => {
-    const source: JsonValue = { grupos: [[1, 2], [3]] }
-    const result = setJsonValue(source, ['grupos', 0, 1], 20)
+  it('changes nested arrays by index', () => {
+    const source: JsonValue = { groups: [[1, 2], [3]] }
+    const result = setJsonValue(source, ['groups', 0, 1], 20)
 
-    expect(expectValue(result)).toEqual({ grupos: [[1, 20], [3]] })
+    expect(expectValue(result)).toEqual({ groups: [[1, 20], [3]] })
   })
 
-  it('edita a raiz e permite substituí-la', () => {
-    expect(expectValue(setJsonValue({ antes: true }, [], 'agora texto'))).toBe('agora texto')
-    expect(expectValue(replaceJsonRoot('antes', [1, false, null]))).toEqual([1, false, null])
+  it('edits and replaces the root', () => {
+    expect(expectValue(setJsonValue({ before: true }, [], 'text now'))).toBe('text now')
+    expect(expectValue(replaceJsonRoot('before', [1, false, null]))).toEqual([1, false, null])
   })
 
-  it('troca o tipo usando o valor inicial correto', () => {
-    const source: JsonValue = { valor: null }
+  it('changes type using the correct default value', () => {
+    const source: JsonValue = { value: null }
 
-    expect(expectValue(changeJsonValueType(source, ['valor'], 'array'))).toEqual({ valor: [] })
-    expect(expectValue(changeJsonValueType(source, ['valor'], 'number'))).toEqual({ valor: 0 })
+    expect(expectValue(changeJsonValueType(source, ['value'], 'array'))).toEqual({ value: [] })
+    expect(expectValue(changeJsonValueType(source, ['value'], 'number'))).toEqual({ value: 0 })
   })
 
-  it('adiciona conteúdo a objetos e arrays vazios', () => {
-    const withProperty = expectValue(addJsonProperty({}, [], 'novo campo', 'boolean'))
-    expect(withProperty).toEqual({ 'novo campo': false })
+  it('adds content to empty objects and arrays', () => {
+    const withProperty = expectValue(addJsonProperty({}, [], 'new field', 'boolean'))
+    expect(withProperty).toEqual({ 'new field': false })
 
     const withItem = expectValue(appendJsonArrayItem([], [], 'object'))
     expect(withItem).toEqual([{}])
   })
 
-  it('renomeia propriedades preservando a posição e o valor', () => {
-    const source: JsonValue = { primeiro: 1, nome: { ativo: true }, ultimo: 3 }
-    const result = renameJsonProperty(source, [], 'nome', 'dados')
+  it('renames properties while preserving position and value', () => {
+    const source: JsonValue = { first: 1, name: { active: true }, last: 3 }
+    const result = renameJsonProperty(source, [], 'name', 'data')
     const renamed = expectValue(result)
 
-    expect(renamed).toEqual({ primeiro: 1, dados: { ativo: true }, ultimo: 3 })
+    expect(renamed).toEqual({ first: 1, data: { active: true }, last: 3 })
     expect(renamed).not.toBeNull()
     expect(Array.isArray(renamed)).toBe(false)
     expect(typeof renamed).toBe('object')
     if (renamed === null || Array.isArray(renamed) || typeof renamed !== 'object') return
-    expect(Object.keys(renamed)).toEqual(['primeiro', 'dados', 'ultimo'])
+    expect(Object.keys(renamed)).toEqual(['first', 'data', 'last'])
   })
 
-  it('impede colisão ao renomear ou adicionar uma chave', () => {
-    const source: JsonValue = { nome: 'Ada', ativo: true }
+  it('prevents collisions when renaming or adding a key', () => {
+    const source: JsonValue = { name: 'Ada', active: true }
 
-    expect(renameJsonProperty(source, [], 'nome', 'ativo')).toMatchObject({
+    expect(renameJsonProperty(source, [], 'name', 'active')).toMatchObject({
       ok: false,
       error: { code: 'duplicate-key' },
     })
-    expect(addJsonProperty(source, [], 'nome', 'null')).toMatchObject({
+    expect(addJsonProperty(source, [], 'name', 'null')).toMatchObject({
       ok: false,
       error: { code: 'duplicate-key' },
     })
-    expect(source).toEqual({ nome: 'Ada', ativo: true })
+    expect(source).toEqual({ name: 'Ada', active: true })
   })
 
-  it('trata pontos, espaços, barras, acentos e símbolos como segmentos literais', () => {
+  it('treats dots, spaces, slashes, accents, and symbols as literal segments', () => {
+    // This multilingual fixture verifies that user-provided keys are never translated.
     const source: JsonValue = {
       'config.versão': {
         'nome completo': {
-          'rota/principal': { 'ação#1': 'antes' },
+          'rota/principal': { 'ação#1': 'before' },
         },
       },
     }
     const path = ['config.versão', 'nome completo', 'rota/principal', 'ação#1']
-    const result = setJsonValue(source, path, 'depois')
+    const result = setJsonValue(source, path, 'after')
 
-    expect(getJsonValueAtPath(expectValue(result), path)).toEqual({ ok: true, value: 'depois' })
+    expect(getJsonValueAtPath(expectValue(result), path)).toEqual({ ok: true, value: 'after' })
   })
 
-  it('falha de forma explícita ao acessar um caminho inexistente', () => {
-    expect(getJsonValueAtPath({ itens: [] }, ['itens', 0])).toMatchObject({
+  it('fails explicitly when accessing a missing path', () => {
+    expect(getJsonValueAtPath({ items: [] }, ['items', 0])).toMatchObject({
       ok: false,
       error: { code: 'invalid-path' },
     })
-    expect(setJsonValue({ dados: {} }, ['dados', 'ausente'], true)).toMatchObject({
+    expect(setJsonValue({ data: {} }, ['data', 'missing'], true)).toMatchObject({
       ok: false,
       error: { code: 'invalid-path' },
     })
   })
 
-  it('remove itens e propriedades somente através da operação central', () => {
-    expect(expectValue(removeJsonValue({ itens: [1, 2, 3] }, ['itens', 1]))).toEqual({
-      itens: [1, 3],
+  it('removes items and properties only through the central operation layer', () => {
+    expect(expectValue(removeJsonValue({ items: [1, 2, 3] }, ['items', 1]))).toEqual({
+      items: [1, 3],
     })
     expect(expectValue(removeJsonValue({ a: 1, b: 2 }, ['a']))).toEqual({ b: 2 })
   })
 
-  it('duplica um item com cópia profunda e o insere logo depois da origem', () => {
-    const nested: JsonValue = [{ dados: { tags: ['a'], ativo: true } }, { dados: null }]
+  it('deeply duplicates an item and inserts it after the source', () => {
+    const nested: JsonValue = [{ data: { tags: ['a'], active: true } }, { data: null }]
     const duplicated = expectValue(duplicateJsonArrayItem(nested, [], 0))
 
     expect(duplicated).toEqual([
-      { dados: { tags: ['a'], ativo: true } },
-      { dados: { tags: ['a'], ativo: true } },
-      { dados: null },
+      { data: { tags: ['a'], active: true } },
+      { data: { tags: ['a'], active: true } },
+      { data: null },
     ])
     if (!Array.isArray(duplicated)) return
     expect(duplicated[1]).not.toBe(duplicated[0])
     expect(cloneJsonValue(duplicated[0] as JsonValue)).toEqual(duplicated[0])
 
-    const editedDuplicate = expectValue(setJsonValue(duplicated, [1, 'dados', 'tags', 0], 'b'))
+    const editedDuplicate = expectValue(setJsonValue(duplicated, [1, 'data', 'tags', 0], 'b'))
     expect(editedDuplicate).toEqual([
-      { dados: { tags: ['a'], ativo: true } },
-      { dados: { tags: ['b'], ativo: true } },
-      { dados: null },
+      { data: { tags: ['a'], active: true } },
+      { data: { tags: ['b'], active: true } },
+      { data: null },
     ])
   })
 
-  it('duplica propriedades com nomes únicos e cópia profunda', () => {
+  it('deeply duplicates properties with unique names', () => {
     const source: JsonValue = {
-      perfil: { preferencias: ['compacto'] },
-      'perfil (cópia)': null,
+      profile: { preferences: ['compact'] },
+      'profile (copy)': null,
     }
-    const result = expectValue(duplicateJsonProperty(source, [], 'perfil'))
+    const result = expectValue(duplicateJsonProperty(source, [], 'profile'))
 
     expect(result).toEqual({
-      perfil: { preferencias: ['compacto'] },
-      'perfil (cópia) 2': { preferencias: ['compacto'] },
-      'perfil (cópia)': null,
+      profile: { preferences: ['compact'] },
+      'profile (copy) 2': { preferences: ['compact'] },
+      'profile (copy)': null,
     })
   })
 
-  it('reordena arrays exatamente sem alterar valores', () => {
-    const first = { nome: 'primeiro' }
-    const second = { nome: 'segundo' }
-    const third = { nome: 'terceiro' }
+  it('reorders arrays exactly without changing values', () => {
+    const first = { name: 'first' }
+    const second = { name: 'second' }
+    const third = { name: 'third' }
     const source: JsonValue = [first, second, third]
 
     const moved = expectValue(moveJsonArrayItem(source, [], 2, 0))
@@ -170,50 +171,50 @@ describe('operações JSON por caminho', () => {
     expect(source).toEqual([first, second, third])
   })
 
-  it('reordena propriedades previsíveis sem alterar seus valores', () => {
-    const source: JsonValue = { primeiro: 1, segundo: { valor: 2 }, terceiro: false }
-    const moved = expectValue(moveJsonProperty(source, [], 'terceiro', 0))
+  it('reorders predictable properties without changing their values', () => {
+    const source: JsonValue = { first: 1, second: { value: 2 }, third: false }
+    const moved = expectValue(moveJsonProperty(source, [], 'third', 0))
 
-    expect(moved).toEqual({ terceiro: false, primeiro: 1, segundo: { valor: 2 } })
+    expect(moved).toEqual({ third: false, first: 1, second: { value: 2 } })
     if (moved === null || Array.isArray(moved) || typeof moved !== 'object') return
-    expect(Object.keys(moved)).toEqual(['terceiro', 'primeiro', 'segundo'])
+    expect(Object.keys(moved)).toEqual(['third', 'first', 'second'])
   })
 
-  it('recusa reordenação visual enganosa para objetos com chaves numéricas', () => {
-    expect(moveJsonProperty({ '0': 'zero', nome: 'Ada' }, [], 'nome', 0)).toMatchObject({
+  it('rejects misleading visual reordering for objects with numeric keys', () => {
+    expect(moveJsonProperty({ '0': 'zero', name: 'Ada' }, [], 'name', 0)).toMatchObject({
       ok: false,
       error: { code: 'unsupported-order' },
     })
   })
 
-  it('aplica o contrato unificado de operações', () => {
+  it('applies the unified operation contract', () => {
     const result = applyJsonOperation(
-      { itens: [] },
-      { kind: 'append-item', arrayPath: ['itens'], valueType: 'string' },
+      { items: [] },
+      { kind: 'append-item', arrayPath: ['items'], valueType: 'string' },
     )
-    expect(expectValue(result)).toEqual({ itens: [''] })
+    expect(expectValue(result)).toEqual({ items: [''] })
   })
 
-  it('preserva todos os tipos após editar e exportar', () => {
-    const source: JsonValue = { texto: '', numero: 0, booleano: false, nulo: null, lista: [] }
-    const edited = expectValue(setJsonValue(source, ['texto'], 'ok'))
-    const editedAgain = expectValue(setJsonValue(edited, ['numero'], 42.5))
+  it('preserves every type after editing and exporting', () => {
+    const source: JsonValue = { text: '', number: 0, boolean: false, nullValue: null, array: [] }
+    const edited = expectValue(setJsonValue(source, ['text'], 'ok'))
+    const editedAgain = expectValue(setJsonValue(edited, ['number'], 42.5))
     const exported = JSON.parse(serializeJson(editedAgain))
 
-    expect(exported).toEqual({ texto: 'ok', numero: 42.5, booleano: false, nulo: null, lista: [] })
-    expect(typeof exported.numero).toBe('number')
-    expect(typeof exported.booleano).toBe('boolean')
+    expect(exported).toEqual({ text: 'ok', number: 42.5, boolean: false, nullValue: null, array: [] })
+    expect(typeof exported.number).toBe('number')
+    expect(typeof exported.boolean).toBe('boolean')
   })
 
-  it('não adiciona metadados internos ao documento exportado', () => {
-    const source: JsonValue = [{ nome: 'A', detalhes: { ativo: true } }]
+  it('does not add internal metadata to the exported document', () => {
+    const source: JsonValue = [{ name: 'A', details: { active: true } }]
     const duplicated = expectValue(duplicateJsonArrayItem(source, [], 0))
     const reordered = expectValue(moveJsonArrayItem(duplicated, [], 1, 0))
     const exported: unknown = JSON.parse(serializeJson(reordered))
 
     expect(exported).toEqual([
-      { nome: 'A', detalhes: { ativo: true } },
-      { nome: 'A', detalhes: { ativo: true } },
+      { name: 'A', details: { active: true } },
+      { name: 'A', details: { active: true } },
     ])
     expect(serializeJson(reordered)).not.toMatch(/jsonEditor|internalId|__meta/i)
   })

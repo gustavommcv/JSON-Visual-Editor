@@ -6,64 +6,64 @@ import { serializeJson } from './exporter'
 import type { JsonValue } from './types'
 
 const document: JsonValue = {
-  projeto: {
-    nome: 'Atlas',
-    ativo: true,
-    versao: 42,
-    'config.versão': {
-      'nome completo': 'Editor Visual',
+  project: {
+    name: 'Atlas',
+    active: true,
+    version: 42,
+    'special.config': {
+      'full name': 'Visual Editor',
     },
   },
-  itens: [{ descricao: 'Primeiro item' }, { descricao: 'Segundo item' }],
+  items: [{ description: 'First item' }, { description: 'Second item' }],
 }
 
 describe('searchJson', () => {
-  it('busca nomes de propriedades sem diferenciar maiúsculas', () => {
-    const results = searchJson(document, 'NOME')
+  it('searches property names without case sensitivity', () => {
+    const results = searchJson(document, 'NAME')
 
-    expect(results.map((result) => result.path)).toContainEqual(['projeto', 'nome'])
+    expect(results.map((result) => result.path)).toContainEqual(['project', 'name'])
     expect(results.some((result) => result.matches.includes('key'))).toBe(true)
   })
 
   it.each([
-    ['string', 'atlas', ['projeto', 'nome']],
-    ['número', '42', ['projeto', 'versao']],
-    ['booleano', 'verdadeiro', ['projeto', 'ativo']],
-  ])('busca um valor %s', (_label, query, expectedPath) => {
+    ['string', 'atlas', ['project', 'name']],
+    ['number', '42', ['project', 'version']],
+    ['boolean', 'true', ['project', 'active']],
+  ])('searches a %s value', (_label, query, expectedPath) => {
     expect(searchJson(document, query).map((result) => result.path)).toContainEqual(expectedPath)
   })
 
-  it('busca valores aninhados e propriedades com caracteres especiais', () => {
-    expect(searchJson(document, 'editor visual').map((result) => result.path)).toContainEqual([
-      'projeto',
-      'config.versão',
-      'nome completo',
+  it('searches nested values and properties with special characters', () => {
+    expect(searchJson(document, 'visual editor').map((result) => result.path)).toContainEqual([
+      'project',
+      'special.config',
+      'full name',
     ])
-    expect(searchJson(document, 'config.versão').map((result) => result.path)).toContainEqual([
-      'projeto',
-      'config.versão',
+    expect(searchJson(document, 'special.config').map((result) => result.path)).toContainEqual([
+      'project',
+      'special.config',
     ])
   })
 
-  it('busca caminhos completos e produz um destino navegável', () => {
-    const [result] = searchJson(document, '$["itens"][1]["descricao"]')
+  it('searches full paths and produces a navigable destination', () => {
+    const [result] = searchJson(document, '$["items"][1]["description"]')
 
-    expect(result?.path).toEqual(['itens', 1, 'descricao'])
-    if (!result) throw new Error('Resultado esperado não encontrado')
+    expect(result?.path).toEqual(['items', 1, 'description'])
+    if (!result) throw new Error('Expected result not found')
     expect(getJsonValueAtPath(document, result.path)).toEqual({
       ok: true,
-      value: 'Segundo item',
+      value: 'Second item',
     })
   })
 
-  it('não altera o documento pesquisado', () => {
+  it('does not change the document being searched', () => {
     const before = serializeJson(document, 'compact')
     searchJson(document, 'item')
 
     expect(serializeJson(document, 'compact')).toBe(before)
   })
 
-  it('retorna estado vazio para busca sem correspondências', () => {
-    expect(searchJson(document, 'não existe')).toEqual([])
+  it('returns an empty state when there are no matches', () => {
+    expect(searchJson(document, 'does not exist')).toEqual([])
   })
 })

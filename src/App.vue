@@ -33,28 +33,28 @@ const {
 <template>
   <div class="app-shell">
     <header class="site-header">
-      <a class="brand" href="#main-content" aria-label="JSON Visual Editor — ir ao conteúdo">
+      <a class="brand" href="#main-content" aria-label="JSON Visual Editor — skip to content">
         <span class="brand__mark" aria-hidden="true">{ }</span>
         <span>JSON <strong>Visual Editor</strong></span>
       </a>
-      <span class="local-pill"><span aria-hidden="true"></span> 100% no navegador</span>
+      <span class="local-pill"><span aria-hidden="true"></span> 100% in your browser</span>
     </header>
 
     <main id="main-content" class="main-content">
       <section v-if="!document" class="hero" aria-labelledby="page-title">
         <div class="hero__copy">
-          <p class="eyebrow">Seu JSON, sem a sintaxe</p>
-          <h1 id="page-title">Entenda seus dados.<br /><em>Visualmente.</em></h1>
+          <p class="eyebrow">Your JSON, without the syntax</p>
+          <h1 id="page-title">Understand your data.<br /><em>Visually.</em></h1>
           <p class="hero__intro">
-            Abra qualquer arquivo JSON e prepare seus dados para uma edição mais simples, clara e
-            segura — sem precisar conhecer código.
+            Open any JSON file and edit your data in a simpler, clearer, and safer way — no coding
+            knowledge required.
           </p>
 
           <div class="privacy-note">
             <span class="privacy-note__icon" aria-hidden="true">⌁</span>
             <div>
-              <strong>Seus dados ficam com você</strong>
-              <p>O arquivo é processado neste navegador e nunca é enviado para um servidor.</p>
+              <strong>Your data stays with you</strong>
+              <p>Your file stays in your browser and is never sent to a server.</p>
             </div>
           </div>
         </div>
@@ -63,19 +63,19 @@ const {
           <JsonDropzone :busy="isImporting" @file-selected="importFile" />
           <div v-if="errorMessage" class="error-message" role="alert" tabindex="-1">
             <div>
-              <strong>Não foi possível importar</strong>
+              <strong>Could not import the file</strong>
               <p>{{ errorMessage }}</p>
             </div>
-            <button type="button" aria-label="Fechar mensagem de erro" @click="clearError">×</button>
+            <button type="button" aria-label="Close error message" @click="clearError">×</button>
           </div>
         </div>
       </section>
 
       <section v-else class="document-view" aria-labelledby="loaded-title">
         <div class="document-view__heading">
-          <p class="eyebrow">Editor visual</p>
-          <h1 id="loaded-title">Edite a estrutura, não a sintaxe.</h1>
-          <p>Cada campo abaixo representa um valor real do seu documento JSON.</p>
+          <p class="eyebrow">Visual editor</p>
+          <h1 id="loaded-title">Edit the structure, not the syntax.</h1>
+          <p>Each field below represents a real value in your JSON document.</p>
         </div>
 
         <JsonDocumentEditor
@@ -105,8 +105,8 @@ const {
     </main>
 
     <footer class="site-footer">
-      <p>Feito para tornar dados estruturados mais humanos.</p>
-      <p>Sem upload · Sem conta · Sem rastreamento</p>
+      <p>Built to make structured data easier to understand.</p>
+      <p>No upload · No account · No tracking</p>
     </footer>
   </div>
 </template>

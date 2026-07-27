@@ -10,8 +10,8 @@ withDefaults(
     showCancel?: boolean
   }>(),
   {
-    label: 'Tipo do novo valor',
-    confirmLabel: 'Criar',
+    label: 'New value type',
+    confirmLabel: 'Create',
     showCancel: true,
   },
 )
@@ -29,18 +29,18 @@ const selectedType = ref<JsonRootKind>('string')
     <label>
       <span>{{ label }}</span>
       <select v-model="selectedType">
-        <option value="string">Texto</option>
-        <option value="number">Número</option>
-        <option value="boolean">Booleano</option>
-        <option value="null">Nulo</option>
-        <option value="object">Objeto</option>
+        <option value="string">String</option>
+        <option value="number">Number</option>
+        <option value="boolean">Boolean</option>
+        <option value="null">Null</option>
+        <option value="object">Object</option>
         <option value="array">Array</option>
       </select>
     </label>
     <div class="type-picker__actions">
       <button class="mini-button mini-button--primary" type="submit">{{ confirmLabel }}</button>
       <button v-if="showCancel" class="mini-button" type="button" @click="emit('cancel')">
-        Cancelar
+        Cancel
       </button>
     </div>
   </form>

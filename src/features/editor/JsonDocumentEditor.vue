@@ -141,25 +141,25 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
     @download="exportOpen = true"
   >
     <div class="editor-shell">
-      <div class="history-toolbar" aria-label="Histórico e comparação">
+      <div class="history-toolbar" aria-label="History and comparison">
         <div class="history-toolbar__group">
           <button
             class="button button--quiet"
             type="button"
             :disabled="!canUndo"
-            title="Desfazer (Ctrl/Cmd + Z)"
+            title="Undo (Ctrl/Cmd + Z)"
             @click="emit('undo')"
           >
-            ↶ Desfazer
+            ↶ Undo
           </button>
           <button
             class="button button--quiet"
             type="button"
             :disabled="!canRedo"
-            title="Refazer (Ctrl + Y ou Cmd + Shift + Z)"
+            title="Redo (Ctrl + Y or Cmd + Shift + Z)"
             @click="emit('redo')"
           >
-            ↷ Refazer
+            ↷ Redo
           </button>
           <button
             class="button button--quiet"
@@ -167,15 +167,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
             :disabled="!canRestore"
             @click="restoreConfirmationOpen = true"
           >
-            Restaurar original
+            Restore original
           </button>
         </div>
         <div class="history-toolbar__group">
           <button class="button button--quiet" type="button" @click="comparisonOpen = true">
-            Comparar <span class="button-count">{{ changeCount }}</span>
+            Compare changes <span class="button-count">{{ changeCount }}</span>
           </button>
           <button class="button button--primary" type="button" @click="exportOpen = true">
-            Exportar
+            Download JSON
           </button>
         </div>
       </div>
@@ -188,7 +188,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
           role="status"
         >
           <span aria-hidden="true">●</span>
-          {{ hasUnexportedChanges ? 'Alterações não exportadas' : 'Versão atual exportada' }}
+          {{ hasUnexportedChanges ? 'Unexported changes' : 'Current version exported' }}
         </span>
       </div>
 
@@ -196,7 +196,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
 
       <div v-if="operationError" class="editor-error" role="alert">
         <span>{{ operationError }}</span>
-        <button type="button" aria-label="Fechar erro" @click="emit('clearError')">×</button>
+        <button type="button" aria-label="Close error" @click="emit('clearError')">×</button>
       </div>
 
       <div class="editor-workspace" @focusin="trackFocusedPath">
@@ -229,9 +229,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
 
     <ConfirmAction
       v-if="restoreConfirmationOpen"
-      title="Restaurar o documento original?"
-      description="O estado importado substituirá a versão atual. Você ainda poderá desfazer esta ação pelo histórico."
-      confirm-label="Restaurar original"
+      title="Restore the original document?"
+      description="The imported document will replace the current version. You can still undo this action from the history."
+      confirm-label="Restore original"
       :path="[]"
       @cancel="restoreConfirmationOpen = false"
       @confirm="confirmRestore"

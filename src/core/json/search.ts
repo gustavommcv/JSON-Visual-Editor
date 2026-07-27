@@ -16,7 +16,7 @@ export interface JsonSearchOptions {
 }
 
 function normalizeSearchText(value: string): string {
-  return value.toLocaleLowerCase('pt-BR')
+  return value.toLowerCase()
 }
 
 function getValueKind(value: JsonValue): JsonRootKind {
@@ -28,19 +28,19 @@ function getValueKind(value: JsonValue): JsonRootKind {
 function searchablePrimitive(value: JsonValue): string | null {
   if (typeof value === 'string' || typeof value === 'number') return String(value)
   if (typeof value === 'boolean') {
-    return value ? 'true verdadeiro' : 'false falso'
+    return value ? 'true' : 'false'
   }
   return null
 }
 
 function previewJsonValue(value: JsonValue): string {
   if (Array.isArray(value)) {
-    return `Array com ${value.length} ${value.length === 1 ? 'item' : 'itens'}`
+    return `Array with ${value.length} ${value.length === 1 ? 'item' : 'items'}`
   }
 
   if (value !== null && typeof value === 'object') {
     const count = Object.keys(value).length
-    return `Objeto com ${count} ${count === 1 ? 'propriedade' : 'propriedades'}`
+    return `Object with ${count} ${count === 1 ? 'property' : 'properties'}`
   }
 
   if (typeof value === 'string') {

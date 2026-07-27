@@ -8,54 +8,54 @@ import {
 } from './analyzer'
 import type { JsonValue } from './types'
 
-describe('seleção automática de visualização', () => {
-  it('usa tabela para arrays de objetos razoavelmente uniformes', () => {
+describe('automatic view selection', () => {
+  it('uses a table for reasonably uniform arrays of objects', () => {
     const value: JsonValue[] = [
-      { id: 1, nome: 'A' },
-      { id: 2, nome: 'B', ativo: true },
+      { id: 1, name: 'A' },
+      { id: 2, name: 'B', active: true },
     ]
 
     expect(analyzeArrayShape(value)).toEqual({
       kind: 'uniform-objects',
-      columns: ['id', 'nome', 'ativo'],
+      columns: ['id', 'name', 'active'],
     })
     expect(getDefaultCollectionView(value)).toBe('table')
     expect(getCompatibleCollectionViews(value)).toEqual(['table', 'list', 'tree'])
   })
 
-  it('une propriedades ausentes mesmo quando as ordens variam', () => {
+  it('combines missing properties even when their order varies', () => {
     const value: JsonValue[] = [
-      { nome: 'A', ativo: true },
-      { ativo: false, nome: 'B', nota: 'novo' },
-      { nome: 'C', nota: 'antigo' },
+      { name: 'A', active: true },
+      { active: false, name: 'B', note: 'new' },
+      { name: 'C', note: 'old' },
     ]
 
     expect(analyzeArrayShape(value)).toEqual({
       kind: 'uniform-objects',
-      columns: ['nome', 'ativo', 'nota'],
+      columns: ['name', 'active', 'note'],
     })
   })
 
-  it('resume células contendo objetos e arrays sem depender de suas chaves', () => {
-    expect(summarizeNestedJsonValue({ qualquer: true, outra: null })).toBe(
-      'Objeto · 2 propriedades',
+  it('summarizes cells containing objects and arrays without relying on their keys', () => {
+    expect(summarizeNestedJsonValue({ any: true, another: null })).toBe(
+      'Object · 2 properties',
     )
-    expect(summarizeNestedJsonValue([{ valor: 1 }, false])).toBe('Array · 2 itens')
-    expect(summarizeNestedJsonValue('texto')).toBeNull()
+    expect(summarizeNestedJsonValue([{ value: 1 }, false])).toBe('Array · 2 items')
+    expect(summarizeNestedJsonValue('text')).toBeNull()
   })
 
-  it('usa lista para arrays simples e vazios', () => {
-    expect(getDefaultCollectionView(['texto', 1, true, null])).toBe('list')
+  it('uses a list for simple and empty arrays', () => {
+    expect(getDefaultCollectionView(['text', 1, true, null])).toBe('list')
     expect(getDefaultCollectionView([])).toBe('list')
   })
 
-  it('usa árvore para arrays mistos, aninhados ou irregulares', () => {
-    expect(getDefaultCollectionView([{ id: 1 }, 'texto', [true]])).toBe('tree')
+  it('uses a tree for mixed, nested, or irregular arrays', () => {
+    expect(getDefaultCollectionView([{ id: 1 }, 'text', [true]])).toBe('tree')
     expect(getDefaultCollectionView([[1], [2]])).toBe('tree')
     expect(getDefaultCollectionView([{ a: 1, b: 2 }, { c: 3 }])).toBe('tree')
   })
 
-  it('usa formulário em objetos, inclusive vazios', () => {
+  it('uses a form for objects, including empty objects', () => {
     expect(getDefaultCollectionView({})).toBe('form')
     expect(getCompatibleCollectionViews({})).toEqual(['form', 'tree'])
   })

@@ -40,39 +40,39 @@ function clearSearch(): void {
 }
 
 function matchLabel(match: JsonSearchResult['matches'][number]): string {
-  const labels = { key: 'Chave', value: 'Valor', path: 'Caminho' }
+  const labels = { key: 'Property', value: 'Value', path: 'Path' }
   return labels[match]
 }
 </script>
 
 <template>
-<section class="json-search" aria-label="Busca global no documento" @keydown.esc="clearSearch">
+<section class="json-search" aria-label="Search the document" @keydown.esc="clearSearch">
   <div class="json-search__field">
     <span aria-hidden="true">⌕</span>
     <label>
-      <span class="visually-hidden">Buscar chaves, valores ou caminhos</span>
+      <span class="visually-hidden">Search properties, values, or paths</span>
       <input
         v-model="query"
         type="search"
-        placeholder="Buscar chave, valor ou caminho…"
+        placeholder="Search property, value, or path…"
         autocomplete="off"
         spellcheck="false"
       />
     </label>
-    <span v-if="isPending" class="json-search__pending" role="status">Buscando…</span>
+    <span v-if="isPending" class="json-search__pending" role="status">Searching…</span>
     <button
       v-else-if="hasQuery"
       class="icon-button"
       type="button"
-      aria-label="Limpar busca"
+      aria-label="Clear search"
       @click="clearSearch"
     >×</button>
   </div>
 
   <div v-if="hasQuery && !isPending" class="search-results" aria-live="polite">
     <div class="search-results__summary">
-      <strong>{{ results.length }} {{ results.length === 1 ? 'resultado' : 'resultados' }}</strong>
-      <span>Busca local, sem alterar os dados</span>
+      <strong>{{ results.length }} {{ results.length === 1 ? 'result' : 'results' }}</strong>
+      <span>Local search that does not change your data</span>
     </div>
 
     <ol v-if="results.length > 0">
@@ -91,8 +91,8 @@ function matchLabel(match: JsonSearchResult['matches'][number]): string {
 
     <div v-else class="search-empty">
       <span aria-hidden="true">⌕</span>
-      <strong>Nenhum resultado encontrado</strong>
-      <p>Tente outro nome de propriedade, valor ou trecho do caminho.</p>
+      <strong>No results found</strong>
+      <p>Try another property name, value, or part of a path.</p>
     </div>
   </div>
 </section>

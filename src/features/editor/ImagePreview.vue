@@ -25,7 +25,7 @@ watch(
       <img
         v-if="previewState === 'ready'"
         :src="candidate.source"
-        alt="Pré-visualização do valor deste campo"
+        alt="Preview of the image in this field"
         loading="lazy"
         decoding="async"
         :referrerpolicy="candidate.referrerPolicy ?? undefined"
@@ -33,24 +33,24 @@ watch(
       />
       <div v-else class="image-preview__fallback" role="status">
         <span aria-hidden="true">×</span>
-        <strong>Não foi possível carregar a imagem</strong>
-        <p>O valor permanece inalterado e pode continuar sendo editado.</p>
+        <strong>The image could not be loaded</strong>
+        <p>The value is unchanged and can still be edited.</p>
       </div>
     </div>
     <figcaption>
       <div>
-        <span class="type-badge">Imagem possível</span>
+        <span class="type-badge">Possible image</span>
         <p v-if="candidate.kind === 'remote'">
-          A prévia faz uma requisição direta ao servidor desta imagem, sem enviar o JSON.
+          The preview requests this image directly from its server without sending your JSON.
         </p>
-        <p v-else>A prévia usa somente o conteúdo incorporado neste valor.</p>
+        <p v-else>The preview only uses the data embedded in this value.</p>
       </div>
       <a
         :href="candidate.source"
         target="_blank"
         rel="noopener noreferrer"
         :referrerpolicy="candidate.referrerPolicy ?? undefined"
-      >Abrir imagem com segurança</a>
+      >Open image safely</a>
     </figcaption>
   </figure>
 </template>

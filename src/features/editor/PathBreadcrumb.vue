@@ -12,8 +12,8 @@ const fullPath = computed(() => formatJsonPath(props.path))
 </script>
 
 <template>
-  <nav class="path-breadcrumb" aria-label="Caminho atual" :title="fullPath">
-    <span class="path-breadcrumb__label">Caminho</span>
+  <nav class="path-breadcrumb" aria-label="Current path" :title="fullPath">
+    <span class="path-breadcrumb__label">Path</span>
     <ol>
       <li><span>$</span></li>
       <li v-for="(segment, index) in path" :key="index">

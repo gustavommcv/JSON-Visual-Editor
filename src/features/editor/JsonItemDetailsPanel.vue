@@ -33,7 +33,7 @@ const { trapFocus } = useDialogFocus(panel, closeButton)
       >
         <header class="details-panel__header">
           <div>
-            <p>Detalhes do item</p>
+            <p>Item details</p>
             <h2 :id="titleId">Item {{ itemNumber }}</h2>
             <code>{{ formatJsonPath(path) }}</code>
           </div>
@@ -41,7 +41,7 @@ const { trapFocus } = useDialogFocus(panel, closeButton)
             ref="closeButton"
             class="icon-button details-panel__close"
             type="button"
-            aria-label="Fechar painel de detalhes"
+            aria-label="Close item details"
             @click="emit('close')"
           >
             ×

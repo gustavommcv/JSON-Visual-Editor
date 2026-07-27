@@ -66,14 +66,14 @@ function validateNumberLiterals(source: string): JsonParseError | null {
     if (!Number.isFinite(value)) {
       return {
         code: 'unsupported-number',
-        message: `O número ${literal} está fora da faixa numérica suportada pelo navegador.`,
+        message: `The number ${literal} is outside the range supported by this browser.`,
       }
     }
 
     if (Number.isInteger(value) && !Number.isSafeInteger(value)) {
       return {
         code: 'unsafe-integer',
-        message: `O inteiro ${literal} excede a faixa segura do JavaScript e não pode ser importado sem risco de perda de precisão.`,
+        message: `The integer ${literal} exceeds JavaScript's safe range and cannot be imported without risking a loss of precision.`,
       }
     }
   }
@@ -83,11 +83,11 @@ function validateNumberLiterals(source: string): JsonParseError | null {
 
 function invalidJsonMessage(error: unknown): string {
   if (!(error instanceof SyntaxError)) {
-    return 'Não foi possível interpretar o conteúdo como JSON.'
+    return 'The selected file is not valid JSON.'
   }
 
   const detail = error.message.replace(/^JSON\.parse:\s*/i, '')
-  return `O arquivo não contém um JSON válido. ${detail}`
+  return `The selected file is not valid JSON. ${detail}`
 }
 
 export function parseJson(source: string): JsonParseResult {
@@ -96,7 +96,7 @@ export function parseJson(source: string): JsonParseResult {
       ok: false,
       error: {
         code: 'empty-file',
-        message: 'O arquivo está vazio. Escolha um arquivo JSON com conteúdo.',
+        message: 'The file is empty. Choose a JSON file that contains data.',
       },
     }
   }

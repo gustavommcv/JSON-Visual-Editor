@@ -45,12 +45,12 @@ export function analyzeArrayShape(value: JsonValue[]): JsonArrayShape {
 
 export function summarizeNestedJsonValue(value: JsonValue): string | null {
   if (Array.isArray(value)) {
-    return `Array · ${value.length} ${value.length === 1 ? 'item' : 'itens'}`
+    return `Array · ${value.length} ${value.length === 1 ? 'item' : 'items'}`
   }
 
   if (isJsonObject(value)) {
     const propertyCount = Object.keys(value).length
-    return `Objeto · ${propertyCount} ${propertyCount === 1 ? 'propriedade' : 'propriedades'}`
+    return `Object · ${propertyCount} ${propertyCount === 1 ? 'property' : 'properties'}`
   }
 
   return null
@@ -82,8 +82,8 @@ export function analyzeRoot(value: JsonValue): JsonRootSummary {
     const propertyCount = Object.keys(value as Record<string, JsonValue>).length
     return {
       kind,
-      label: 'Objeto',
-      detail: `${propertyCount} ${propertyCount === 1 ? 'propriedade' : 'propriedades'}`,
+      label: 'Object',
+      detail: `${propertyCount} ${propertyCount === 1 ? 'property' : 'properties'}`,
     }
   }
 
@@ -92,20 +92,20 @@ export function analyzeRoot(value: JsonValue): JsonRootSummary {
     return {
       kind,
       label: 'Array',
-      detail: `${itemCount} ${itemCount === 1 ? 'item' : 'itens'}`,
+      detail: `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`,
     }
   }
 
   const labels: Record<Exclude<JsonRootKind, 'object' | 'array'>, string> = {
-    string: 'Texto',
-    number: 'Número',
-    boolean: 'Booleano',
-    null: 'Nulo',
+    string: 'String',
+    number: 'Number',
+    boolean: 'Boolean',
+    null: 'Null',
   }
 
   return {
     kind,
     label: labels[kind],
-    detail: 'Valor simples na raiz',
+    detail: 'Primitive value at the root',
   }
 }
