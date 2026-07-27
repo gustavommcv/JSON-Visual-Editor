@@ -314,7 +314,7 @@ h1 em {
 
 .dropzone__format {
   margin-bottom: 0;
-  color: #89918c;
+  color: var(--muted);
   font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
   font-size: 11px;
   letter-spacing: 0.04em;
