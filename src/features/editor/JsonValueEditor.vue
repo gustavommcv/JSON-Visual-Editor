@@ -663,6 +663,19 @@ function viewLabel(view: JsonCollectionView): string {
             class="array-items"
             :class="{ 'array-items--tree': viewMode === 'tree' }"
           >
+            <!--
+              FLAGGED, NOT FIXED: :key="index" means deleting/reordering an earlier
+              item reuses this child JsonValueEditor for a different array element,
+              so its local state (expanded, viewMode, selectedItemIndex, ...) can be
+              displayed against the wrong item (e.g. an item that was never expanded
+              can render as expanded). A watch(() => props.value, resetLocalState)
+              would fix the symptom but also fires on the user's own edits to nested
+              content within the *same* item (any nested edit produces a new object
+              reference along the whole ancestor chain), collapsing/resetting the
+              section out from under someone actively typing inside it - a worse
+              regression. A correct fix needs stable per-item identity, which JSON
+              arrays don't have and this app deliberately avoids synthesizing.
+            -->
             <li
               v-for="(childValue, index) in arrayValue"
               :key="index"
