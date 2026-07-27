@@ -70,6 +70,8 @@ export function useJsonDocument() {
   }
 
   async function importFile(file: File): Promise<boolean> {
+    if (isImporting.value) return false
+
     errorMessage.value = null
 
     if (!JSON_FILE_EXTENSION.test(file.name)) {
