@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type { JsonPrimitive, JsonRootKind } from '@/core/json/types'
 import ImagePreview from './ImagePreview.vue'
@@ -19,6 +19,13 @@ const emit = defineEmits<{
 }>()
 
 const numberError = ref<string | null>(null)
+
+watch(
+  () => props.value,
+  () => {
+    numberError.value = null
+  },
+)
 const valueType = computed<'string' | 'number' | 'boolean'>(
   () => typeof props.value as 'string' | 'number' | 'boolean',
 )
