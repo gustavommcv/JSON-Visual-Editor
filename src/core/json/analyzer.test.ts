@@ -9,7 +9,7 @@ import {
 import type { JsonValue } from './types'
 
 describe('automatic view selection', () => {
-  it('defaults reasonably uniform arrays of objects to a list, with table available', () => {
+  it('uses a table for reasonably uniform arrays of objects', () => {
     const value: JsonValue[] = [
       { id: 1, name: 'A' },
       { id: 2, name: 'B', active: true },
@@ -19,7 +19,7 @@ describe('automatic view selection', () => {
       kind: 'uniform-objects',
       columns: ['id', 'name', 'active'],
     })
-    expect(getDefaultCollectionView(value)).toBe('list')
+    expect(getDefaultCollectionView(value)).toBe('table')
     expect(getCompatibleCollectionViews(value)).toEqual(['table', 'list'])
   })
 
