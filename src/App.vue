@@ -2,6 +2,9 @@
 import JsonDocumentEditor from '@/features/editor/JsonDocumentEditor.vue'
 import JsonDropzone from '@/features/import/JsonDropzone.vue'
 import { useJsonDocument } from '@/composables/useJsonDocument'
+import { useTheme } from '@/composables/useTheme'
+
+const { theme, toggleTheme } = useTheme()
 
 const {
   document,
@@ -33,10 +36,52 @@ const {
 <template>
   <div class="app-shell">
     <header class="site-header">
-      <a class="brand" href="#main-content" aria-label="JSON Visual Editor — skip to content">
-        <span class="brand__mark" aria-hidden="true">{ }</span>
-        <span>JSON <strong>Visual Editor</strong></span>
-      </a>
+      <div class="site-header__start">
+        <a class="brand" href="#main-content" aria-label="JSON Visual Editor — skip to content">
+          <span class="brand__mark" aria-hidden="true">{ }</span>
+          <span>JSON <strong>Visual Editor</strong></span>
+        </a>
+        <button
+          v-if="document"
+          class="theme-toggle"
+          type="button"
+          :aria-label="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+          :aria-pressed="theme === 'dark'"
+          @click="toggleTheme"
+        >
+          <svg
+            v-if="theme === 'dark'"
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />
+          </svg>
+          <svg
+            v-else
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+            />
+          </svg>
+        </button>
+      </div>
       <span class="local-pill"><span aria-hidden="true"></span> 100% in your browser</span>
     </header>
 
