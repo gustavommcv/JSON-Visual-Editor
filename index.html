@@ -9,6 +9,30 @@
     />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#f6f7f2" />
+    <script>
+      (function () {
+        var STORAGE_KEY = 'json-visual-editor-theme';
+        var DARK_THEME_COLOR = '#101713';
+        var LIGHT_THEME_COLOR = '#f6f7f2';
+        var theme = 'light';
+
+        try {
+          var stored = localStorage.getItem(STORAGE_KEY);
+          if (stored === 'light' || stored === 'dark') {
+            theme = stored;
+          } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+          }
+        } catch (error) {
+          theme = 'light';
+        }
+
+        document.documentElement.setAttribute('data-theme', theme);
+
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href="https://gustavommcv.github.io/JSON-Visual-Editor/" />
     <title>JSON Visual Editor — Edit &amp; Compare JSON in Your Browser</title>
