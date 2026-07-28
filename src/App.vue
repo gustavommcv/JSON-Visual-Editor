@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import JsonDocumentEditor from '@/features/editor/JsonDocumentEditor.vue'
 import JsonDropzone from '@/features/import/JsonDropzone.vue'
+import ResumeSessionPrompt from '@/features/import/ResumeSessionPrompt.vue'
+import { useAutoSave } from '@/composables/useAutoSave'
 import { useJsonDocument } from '@/composables/useJsonDocument'
 import { useTheme } from '@/composables/useTheme'
 
@@ -8,6 +10,8 @@ const { theme, toggleTheme } = useTheme()
 
 const {
   document,
+  history,
+  lastExported,
   errorMessage,
   isImporting,
   operationError,
@@ -28,13 +32,38 @@ const {
   applyEditorOperation,
   undoDocument,
   redoDocument,
+  restoreOriginal: restoreOriginalDocument,
+  restoreSession,
+  downloadDocument: downloadDocumentFile,
+} = useJsonDocument()
+
+const {
+  pendingResume,
+  otherTabEditing,
+  storageWarning,
+  resumeSession,
+  discardSession,
   restoreOriginal,
   downloadDocument,
-} = useJsonDocument()
+} = useAutoSave({
+  document,
+  history,
+  lastExported,
+  restoreSession,
+  restoreOriginal: restoreOriginalDocument,
+  downloadDocument: downloadDocumentFile,
+})
 </script>
 
 <template>
   <div class="app-shell">
+    <ResumeSessionPrompt
+      v-if="pendingResume"
+      :preview="pendingResume"
+      @resume="resumeSession"
+      @discard="discardSession"
+    />
+
     <header class="site-header">
       <div class="site-header__start">
         <a class="brand" href="#main-content" aria-label="JSON Visual Editor — skip to content">
@@ -100,6 +129,17 @@ const {
     </header>
 
     <main id="main-content" class="main-content">
+      <div v-if="otherTabEditing || storageWarning" class="session-notices">
+        <p v-if="otherTabEditing" class="session-notice" role="status">
+          This document may be open in another tab. Edits in both tabs are saved to the same slot,
+          so the most recent save wins.
+        </p>
+        <p v-if="storageWarning" class="session-notice" role="status">
+          Your browser's storage is full, so auto-save is paused for this session. Your edits are
+          safe for now — export soon so you don't lose them.
+        </p>
+      </div>
+
       <section v-if="!document" class="hero" aria-labelledby="page-title">
         <div class="hero__copy">
           <p class="eyebrow">Your JSON, without the syntax</p>

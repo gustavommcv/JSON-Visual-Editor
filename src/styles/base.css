@@ -1692,6 +1692,23 @@ h1 em {
   line-height: 1.5;
 }
 
+.session-notices {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.session-notice {
+  margin: 0;
+  padding: 10px 14px;
+  color: var(--order-note-text);
+  background: var(--order-note-bg);
+  border: 1px solid var(--order-note-border);
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .add-property-form {
   display: grid;
   grid-template-columns: minmax(120px, 1fr) minmax(110px, 0.55fr) auto auto;
@@ -2000,6 +2017,83 @@ h1 em {
   padding-top: 6px;
 }
 
+.resume-dialog {
+  display: grid;
+  width: min(460px, 100%);
+  padding: clamp(22px, 4vw, 32px);
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-modal);
+}
+
+.resume-dialog__mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: var(--green);
+  background: var(--green-soft);
+  border-radius: 50%;
+}
+
+.resume-dialog h2 {
+  margin-bottom: 8px;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.resume-dialog p {
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.resume-dialog__details {
+  display: grid;
+  margin: 0 0 20px;
+  padding: 10px 12px;
+  gap: 8px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+
+.resume-dialog__details div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.resume-dialog__details dt {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.resume-dialog__details dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resume-dialog__actions {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .details-backdrop {
   grid-template-rows: 1fr;
   place-items: stretch end;
@@ -2246,6 +2340,14 @@ h1 em {
   }
 
   .confirmation-dialog__actions {
+    grid-column: 1;
+  }
+
+  .resume-dialog {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-dialog__actions {
     grid-column: 1;
   }
 
