@@ -383,7 +383,7 @@ function viewLabel(view: JsonCollectionView): string {
 
       <div class="collection-editor__body">
         <div class="collection-toolbar">
-          <div class="view-switcher" aria-label="View">
+          <div v-if="compatibleViews.length > 1" class="view-switcher" aria-label="View">
             <button
               v-for="view in compatibleViews"
               :key="view"
