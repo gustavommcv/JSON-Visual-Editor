@@ -1,4 +1,4 @@
-import { computed, ref, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 
 import { analyzeRoot } from '@/core/json/analyzer'
 import { areJsonSnapshotsEqual, compareJsonValues } from '@/core/json/diff'
@@ -55,6 +55,15 @@ export function useJsonDocument() {
   const suggestedFileName = computed(() =>
     document.value ? getEditedJsonDownloadName(document.value.fileName) : 'document-edited.json',
   )
+
+  function handleBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!hasUnexportedChanges.value) return
+    event.preventDefault()
+    event.returnValue = ''
+  }
+
+  onMounted(() => window.addEventListener('beforeunload', handleBeforeUnload))
+  onBeforeUnmount(() => window.removeEventListener('beforeunload', handleBeforeUnload))
 
   function syncCurrentFromHistory(): void {
     if (!document.value || !history.value) return
