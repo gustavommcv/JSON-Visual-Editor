@@ -57,11 +57,7 @@ export function summarizeNestedJsonValue(value: JsonValue): string | null {
 }
 
 export function getDefaultCollectionView(value: JsonObject | JsonValue[]): JsonCollectionView {
-  if (!Array.isArray(value)) return 'form'
-
-  const shape = analyzeArrayShape(value)
-  if (shape.kind === 'uniform-objects') return 'table'
-  return 'list'
+  return Array.isArray(value) ? 'list' : 'form'
 }
 
 export function getCompatibleCollectionViews(
