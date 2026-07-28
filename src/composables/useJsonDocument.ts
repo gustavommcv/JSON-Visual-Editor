@@ -20,6 +20,14 @@ import { parseJson } from '@/core/json/parser'
 import type { JsonValue, LoadedJsonDocument } from '@/core/json/types'
 import { downloadJson } from '@/features/export/downloadJson'
 
+export interface RestoreSessionInput {
+  fileName: string
+  original: JsonValue
+  current: JsonValue
+  lastExported: JsonValue | undefined
+  history: JsonHistoryState
+}
+
 const JSON_FILE_EXTENSION = /\.json$/i
 
 export function useJsonDocument() {
@@ -167,11 +175,24 @@ export function useJsonDocument() {
     syncCurrentFromHistory()
   }
 
-  function restoreOriginal(): void {
-    if (!document.value || !history.value) return
-    if (!canRestore.value) return
+  function restoreOriginal(): boolean {
+    if (!document.value || !history.value) return false
+    if (!canRestore.value) return false
     history.value = commitJsonHistory(history.value, document.value.original)
     syncCurrentFromHistory()
+    return true
+  }
+
+  function restoreSession(input: RestoreSessionInput): void {
+    document.value = {
+      fileName: input.fileName,
+      original: input.original,
+      current: input.current,
+    }
+    history.value = input.history
+    lastExported.value = input.lastExported
+    errorMessage.value = null
+    operationError.value = null
   }
 
   function downloadDocument(formatting: JsonFormatting): boolean {
@@ -188,6 +209,8 @@ export function useJsonDocument() {
 
   return {
     document,
+    history,
+    lastExported,
     errorMessage,
     isImporting,
     operationError,
@@ -209,6 +232,7 @@ export function useJsonDocument() {
     undoDocument,
     redoDocument,
     restoreOriginal,
+    restoreSession,
     downloadDocument,
   }
 }
