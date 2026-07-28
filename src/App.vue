@@ -42,7 +42,6 @@ const {
           <span>JSON <strong>Visual Editor</strong></span>
         </a>
         <button
-          v-if="document"
           class="theme-toggle"
           type="button"
           :aria-label="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
