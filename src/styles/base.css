@@ -306,7 +306,14 @@ a,
   gap: 16px;
 }
 
-.theme-toggle {
+.site-header__end {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-toggle,
+.github-link {
   display: grid;
   flex: 0 0 auto;
   width: 34px;
@@ -319,7 +326,12 @@ a,
   cursor: pointer;
 }
 
-.theme-toggle:hover {
+.github-link {
+  text-decoration: none;
+}
+
+.theme-toggle:hover,
+.github-link:hover {
   color: var(--ink);
   background: var(--surface);
   border-color: var(--input-border);
