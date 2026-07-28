@@ -2097,6 +2097,18 @@ h1 em {
   margin: 0;
 }
 
+.site-footer__end {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  gap: 6px;
+}
+
+.site-footer__end a {
+  color: var(--green);
+  font-weight: 600;
+}
+
 @media (max-width: 900px) {
   .main-content {
     align-items: start;
@@ -2282,6 +2294,10 @@ h1 em {
     align-items: center;
     flex-direction: column;
     text-align: center;
+  }
+
+  .site-footer__end {
+    align-items: center;
   }
 }
 

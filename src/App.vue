@@ -170,7 +170,22 @@ const {
 
     <footer class="site-footer">
       <p>Built to make structured data easier to understand.</p>
-      <p>No upload · No account · No tracking</p>
+      <div class="site-footer__end">
+        <p>No upload · No account · No tracking</p>
+        <p>
+          Open source ·
+          <a href="https://github.com/gustavommcv/JSON-Visual-Editor" target="_blank" rel="noopener noreferrer"
+            >View on GitHub</a
+          >
+          ·
+          <a
+            href="https://github.com/gustavommcv/JSON-Visual-Editor/blob/main/LICENSE"
+            target="_blank"
+            rel="noopener noreferrer"
+            >GPL-3.0</a
+          >
+        </p>
+      </div>
     </footer>
   </div>
 </template>
