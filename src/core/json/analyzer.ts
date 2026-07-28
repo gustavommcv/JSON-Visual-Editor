@@ -1,6 +1,6 @@
 import type { JsonObject, JsonRootKind, JsonValue } from './types'
 
-export type JsonCollectionView = 'form' | 'table' | 'list' | 'tree'
+export type JsonCollectionView = 'form' | 'table' | 'list'
 
 export interface JsonArrayShape {
   kind: 'uniform-objects' | 'simple' | 'irregular'
@@ -61,18 +61,17 @@ export function getDefaultCollectionView(value: JsonObject | JsonValue[]): JsonC
 
   const shape = analyzeArrayShape(value)
   if (shape.kind === 'uniform-objects') return 'table'
-  if (shape.kind === 'simple') return 'list'
-  return 'tree'
+  return 'list'
 }
 
 export function getCompatibleCollectionViews(
   value: JsonObject | JsonValue[],
 ): JsonCollectionView[] {
-  if (!Array.isArray(value)) return ['form', 'tree']
+  if (!Array.isArray(value)) return ['form']
 
   const shape = analyzeArrayShape(value)
-  if (shape.kind === 'uniform-objects') return ['table', 'list', 'tree']
-  return shape.kind === 'simple' ? ['list', 'tree'] : ['tree', 'list']
+  if (shape.kind === 'uniform-objects') return ['table', 'list']
+  return ['list']
 }
 
 export function analyzeRoot(value: JsonValue): JsonRootSummary {

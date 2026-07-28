@@ -311,7 +311,6 @@ function viewLabel(view: JsonCollectionView): string {
     form: 'Form',
     table: 'Table',
     list: 'Cards',
-    tree: 'Tree',
   }
   return labels[view]
 }
@@ -427,7 +426,6 @@ function viewLabel(view: JsonCollectionView): string {
           <div
             v-else
             class="object-fields"
-            :class="{ 'object-fields--tree': viewMode === 'tree' }"
           >
             <section
               v-for="([key, childValue], index) in objectEntries"
@@ -661,7 +659,6 @@ function viewLabel(view: JsonCollectionView): string {
           <ol
             v-else
             class="array-items"
-            :class="{ 'array-items--tree': viewMode === 'tree' }"
           >
             <!--
               FLAGGED, NOT FIXED: :key="index" means deleting/reordering an earlier

@@ -20,7 +20,7 @@ describe('automatic view selection', () => {
       columns: ['id', 'name', 'active'],
     })
     expect(getDefaultCollectionView(value)).toBe('table')
-    expect(getCompatibleCollectionViews(value)).toEqual(['table', 'list', 'tree'])
+    expect(getCompatibleCollectionViews(value)).toEqual(['table', 'list'])
   })
 
   it('combines missing properties even when their order varies', () => {
@@ -49,14 +49,14 @@ describe('automatic view selection', () => {
     expect(getDefaultCollectionView([])).toBe('list')
   })
 
-  it('uses a tree for mixed, nested, or irregular arrays', () => {
-    expect(getDefaultCollectionView([{ id: 1 }, 'text', [true]])).toBe('tree')
-    expect(getDefaultCollectionView([[1], [2]])).toBe('tree')
-    expect(getDefaultCollectionView([{ a: 1, b: 2 }, { c: 3 }])).toBe('tree')
+  it('uses a list for mixed, nested, or irregular arrays', () => {
+    expect(getDefaultCollectionView([{ id: 1 }, 'text', [true]])).toBe('list')
+    expect(getDefaultCollectionView([[1], [2]])).toBe('list')
+    expect(getDefaultCollectionView([{ a: 1, b: 2 }, { c: 3 }])).toBe('list')
   })
 
   it('uses a form for objects, including empty objects', () => {
     expect(getDefaultCollectionView({})).toBe('form')
-    expect(getCompatibleCollectionViews({})).toEqual(['form', 'tree'])
+    expect(getCompatibleCollectionViews({})).toEqual(['form'])
   })
 })
