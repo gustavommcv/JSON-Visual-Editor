@@ -103,6 +103,17 @@
   --entry-border: #e0e5df;
   --disabled-text: #89928c;
 
+  /* recursive editor: inputs, table/cards, and collapsible containers get
+     their own surface tier so dark mode can tune them independently of the
+     generic --surface-raised/--input-border used elsewhere (search, dialogs) */
+  --editor-collection-bg: rgba(251, 252, 248, 0.88);
+  --editor-input-bg: #ffffff;
+  --editor-border: #cbd3cc;
+  --editor-key-text: #2d4d3c;
+  --editor-wash: #f1f7ed;
+  --editor-card-bg: #ffffff;
+  --editor-card-border: #d8ddd5;
+
   /* shadows */
   --shadow: 0 24px 70px rgba(31, 48, 39, 0.09);
   --shadow-search-results: 0 12px 35px rgba(24, 43, 32, 0.09);
@@ -128,7 +139,7 @@
   --line: #26332c;
   --input-border: #3d4d44;
   --border-emphasis: #4d6156;
-  --accent-border: #3d6552;
+  --accent-border: #4f8a70;
 
   --green: #5ecb92;
   --green-fill: #265c45;
@@ -175,9 +186,9 @@
   --toolbar-bg: #161f1b;
   --search-bar-bg: #131c18;
   --wash-green: #1c2e22;
-  --table-header-text: #aab7ae;
-  --table-header-bg: #1c2822;
-  --table-row-bg: #182420;
+  --table-header-text: #b9c7bd;
+  --table-header-bg: #28352f;
+  --table-row-bg: #212b26;
   --property-key-text: #8fd6ad;
   --dropzone-hover-bg: #1c2e22;
   --dropzone-border: #3d4d44;
@@ -190,15 +201,23 @@
   --checkerboard-a: #202d27;
   --table-null-text: #c3a8cf;
   --grid-line: rgba(94, 203, 146, 0.04);
-  --workspace-bg: #121b17;
+  --workspace-bg: #141a17;
   --scrollbar-thumb: #4a5c52;
   --root-replacement-bg: rgba(20, 29, 25, 0.9);
   --image-fallback-bg: rgba(34, 48, 42, 0.92);
   --toggle-track-bg: #3d4d44;
-  --null-editor-bg: #182219;
-  --entry-bg: #182420;
-  --entry-border: #2a382f;
+  --null-editor-bg: #212b26;
+  --entry-bg: #212b26;
+  --entry-border: #38493f;
   --disabled-text: #62766c;
+
+  --editor-collection-bg: #1a2320;
+  --editor-input-bg: #2d3a35;
+  --editor-border: #6c897c;
+  --editor-key-text: #a9c4b3;
+  --editor-wash: #2d3a35;
+  --editor-card-bg: #212b26;
+  --editor-card-border: #38493f;
 
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
   --shadow-search-results: 0 12px 35px rgba(0, 0, 0, 0.4);
@@ -1115,8 +1134,8 @@ h1 em {
 .type-picker select,
 .type-control select {
   color: var(--ink);
-  background: var(--surface-raised);
-  border: 1px solid var(--input-border);
+  background: var(--editor-input-bg);
+  border: 1px solid var(--editor-border);
   border-radius: 8px;
 }
 
@@ -1296,7 +1315,7 @@ h1 em {
   left: 3px;
   width: 16px;
   height: 16px;
-  background: var(--surface-raised);
+  background: var(--editor-input-bg);
   border-radius: 50%;
   box-shadow: var(--shadow-toggle-thumb);
   transition: 140ms ease;
@@ -1384,8 +1403,8 @@ h1 em {
 .collection-editor {
   min-width: 0;
   overflow: visible;
-  background: var(--dropzone-bg);
-  border: 1px solid var(--input-border);
+  background: var(--editor-collection-bg);
+  border: 1px solid var(--editor-border);
   border-radius: 12px;
 }
 
@@ -1459,7 +1478,7 @@ h1 em {
 
 .view-switcher button.is-active {
   color: var(--green);
-  background: var(--surface-raised);
+  background: var(--editor-input-bg);
   box-shadow: var(--shadow-small);
 }
 
@@ -1523,7 +1542,7 @@ h1 em {
   width: 100%;
   min-height: 30px;
   padding: 5px 8px;
-  color: var(--property-key-text);
+  color: var(--editor-key-text);
   background: transparent;
   border-color: transparent;
   font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
@@ -1533,8 +1552,8 @@ h1 em {
 
 .property-key:hover,
 .property-key:focus {
-  background: var(--surface-raised);
-  border-color: var(--input-border);
+  background: var(--editor-input-bg);
+  border-color: var(--editor-border);
 }
 
 .property-index,
@@ -1580,7 +1599,7 @@ h1 em {
   align-content: center;
   color: var(--muted);
   background: var(--entry-bg);
-  border: 1px dashed var(--input-border);
+  border: 1px dashed var(--editor-border);
   border-radius: 10px;
   text-align: center;
 }
@@ -1612,8 +1631,8 @@ h1 em {
   min-height: 32px;
   padding: 6px 10px;
   color: var(--muted);
-  background: var(--surface-raised);
-  border: 1px solid var(--input-border);
+  background: var(--editor-input-bg);
+  border: 1px solid var(--editor-border);
   border-radius: 7px;
   cursor: pointer;
   font-size: 10px;
@@ -1640,7 +1659,7 @@ h1 em {
   width: 100%;
   min-height: 38px;
   color: var(--green);
-  background: var(--wash-green);
+  background: var(--editor-wash);
   border-style: dashed;
 }
 
@@ -1667,7 +1686,7 @@ h1 em {
   gap: 8px;
   align-items: end;
   padding: 10px;
-  background: var(--wash-green);
+  background: var(--editor-wash);
   border: 1px solid var(--line);
   border-radius: 9px;
 }
@@ -1685,7 +1704,7 @@ h1 em {
   width: 100%;
   min-width: 620px;
   border-collapse: collapse;
-  background: var(--surface-raised);
+  background: var(--editor-input-bg);
 }
 
 .json-table th,
@@ -1769,7 +1788,7 @@ h1 em {
   gap: 2px 8px;
   align-items: center;
   color: var(--ink);
-  background: var(--wash-green);
+  background: var(--editor-wash);
   border: 1px solid var(--line);
   border-radius: 8px;
   cursor: pointer;
@@ -1814,8 +1833,8 @@ h1 em {
   min-height: 34px;
   padding: 5px;
   color: var(--muted);
-  background: var(--surface-raised);
-  border: 1px solid var(--input-border);
+  background: var(--editor-input-bg);
+  border: 1px solid var(--editor-border);
   border-radius: 7px;
   font-size: 10px;
 }
@@ -1835,8 +1854,8 @@ h1 em {
 .table-card {
   min-width: 0;
   padding: 14px;
-  background: var(--surface-raised);
-  border: 1px solid var(--line);
+  background: var(--editor-card-bg);
+  border: 1px solid var(--editor-card-border);
   border-radius: 10px;
 }
 
