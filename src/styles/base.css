@@ -1264,13 +1264,8 @@ h1 em {
   padding: 10px;
   background: #f7f8f4;
   border: 1px solid #e0e5df;
-  border-radius: 9px;
-}
-
-.object-fields--tree > .property-field,
-.array-items--tree > .array-item {
   border-left: 3px solid #9db6a5;
-  border-radius: 4px 9px 9px 4px;
+  border-radius: 4px;
 }
 
 .property-field__heading,
