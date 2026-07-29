@@ -138,6 +138,24 @@ export function serializeSession(input: SerializeSessionInput): PersistedSession
   }
 }
 
+/**
+ * Creates the compact record used by live auto-save. Crash recovery needs
+ * the current document and baselines, but not every immutable snapshot in
+ * the tab's undo/redo stack. `deserializeSession` rebuilds a valid history
+ * whose present value is `current`, while in-tab undo/redo is untouched.
+ */
+export function serializeRecoverySession(input: SerializeSessionInput): PersistedSession {
+  return serializeSession({
+    ...input,
+    history: {
+      ...input.history,
+      past: [],
+      future: [],
+      grouping: null,
+    },
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Deep, hostile-input-safe JSON validation (AS-02)
 // ---------------------------------------------------------------------------
@@ -461,10 +479,11 @@ export function applyStorageBudget(record: PersistedSession): BudgetedSessionRes
   }
 
   let candidate: PersistedSession = { ...record, history: { ...record.history, past, future } }
+  let candidateSize = approxByteSize(candidate)
 
   // Drop future (redo) first, then past (undo), farthest-from-present entries
   // first, until the record fits the byte budget or history is empty.
-  while (approxByteSize(candidate) > MAX_SESSION_BYTES_APPROX && (future.length > 0 || past.length > 0)) {
+  while (candidateSize > MAX_SESSION_BYTES_APPROX && (future.length > 0 || past.length > 0)) {
     historyTrimmed = true
     if (future.length > 0) {
       future = future.slice(0, -1)
@@ -472,9 +491,10 @@ export function applyStorageBudget(record: PersistedSession): BudgetedSessionRes
       past = past.slice(1)
     }
     candidate = { ...candidate, history: { ...candidate.history, past, future } }
+    candidateSize = approxByteSize(candidate)
   }
 
-  if (approxByteSize(candidate) > MAX_SESSION_BYTES_APPROX) {
+  if (candidateSize > MAX_SESSION_BYTES_APPROX) {
     return { ok: false, reason: 'too-large-even-without-history' }
   }
 

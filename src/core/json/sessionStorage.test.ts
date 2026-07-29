@@ -11,6 +11,7 @@ import {
   isPersistedSessionTombstone,
   isValidJsonValue,
   migrateLegacySingleSession,
+  serializeRecoverySession,
   serializeSession,
   type PersistedSession,
 } from './sessionStorage'
@@ -91,6 +92,24 @@ describe('serializeSession', () => {
 
     expect(record.history).not.toHaveProperty('grouping')
     expect(record.history).not.toHaveProperty('present')
+  })
+
+  it('creates a compact recovery record without duplicating undo or redo snapshots', () => {
+    const history = buildHistory()
+    history.future = [{ name: 'future' }]
+
+    const record = serializeRecoverySession({
+      fileName: 'large.json',
+      original: { name: 'before' },
+      current: history.present,
+      lastExported: undefined,
+      history,
+    })
+
+    expect(record.current).toEqual(history.present)
+    expect(record.history).toEqual({ past: [], future: [], limit: history.limit })
+    expect(history.past).toHaveLength(1)
+    expect(history.future).toHaveLength(1)
   })
 
   it('defaults sessionId, ownerTabId, and revision when the caller does not care about identity', () => {
