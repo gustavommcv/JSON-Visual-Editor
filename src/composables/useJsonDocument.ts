@@ -37,6 +37,8 @@ export function useJsonDocument() {
   const operationError = ref<string | null>(null)
   const history = shallowRef<JsonHistoryState | null>(null)
   const lastExported = shallowRef<JsonValue>()
+  /** Monotonic signal emitted once for each committed document edit. */
+  const editVersion = ref(0)
 
   const rootSummary = computed(() =>
     document.value ? analyzeRoot(document.value.current) : null,
@@ -77,6 +79,10 @@ export function useJsonDocument() {
     if (!document.value || !history.value) return
     document.value = { ...document.value, current: history.value.present }
     operationError.value = null
+  }
+
+  function markEditCommitted(): void {
+    editVersion.value += 1
   }
 
   function getTypingGroupKey(operation: JsonEditorOperation, current: JsonValue): string | undefined {
@@ -158,6 +164,7 @@ export function useJsonDocument() {
         groupKey ? { groupKey } : {},
       )
       syncCurrentFromHistory()
+      markEditCommitted()
     }
     operationError.value = null
     return true
@@ -167,12 +174,14 @@ export function useJsonDocument() {
     if (!history.value || !canUndo.value) return
     history.value = undoJsonHistory(history.value)
     syncCurrentFromHistory()
+    markEditCommitted()
   }
 
   function redoDocument(): void {
     if (!history.value || !canRedo.value) return
     history.value = redoJsonHistory(history.value)
     syncCurrentFromHistory()
+    markEditCommitted()
   }
 
   function restoreOriginal(): boolean {
@@ -180,6 +189,7 @@ export function useJsonDocument() {
     if (!canRestore.value) return false
     history.value = commitJsonHistory(history.value, document.value.original)
     syncCurrentFromHistory()
+    markEditCommitted()
     return true
   }
 
@@ -210,6 +220,7 @@ export function useJsonDocument() {
   return {
     document,
     history,
+    editVersion,
     lastExported,
     errorMessage,
     isImporting,

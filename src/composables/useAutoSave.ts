@@ -365,6 +365,8 @@ function sweepRetention(
 export interface UseAutoSaveParams {
   document: Ref<LoadedJsonDocument | null>
   history: Ref<JsonHistoryState | null>
+  /** Increments exactly once after an edit is committed to document/history. */
+  editVersion: Readonly<Ref<number>>
   lastExported: Ref<JsonValue | undefined>
   restoreSession: (input: RestoreSessionInput) => void
   restoreOriginal: () => boolean
@@ -383,7 +385,7 @@ export interface UseAutoSaveParams {
  * change and do not repeat the warning on every attempt.
  */
 export function useAutoSave(params: UseAutoSaveParams) {
-  const { document, history, lastExported } = params
+  const { document, history, editVersion, lastExported } = params
 
   const recoverableSessions = ref<SessionPreview[]>([])
   const quarantinedSessions = ref<QuarantinedSessionInfo[]>([])
@@ -727,22 +729,30 @@ export function useAutoSave(params: UseAutoSaveParams) {
     }
   }
 
-  watch([document, history], () => {
+  watch(() => document.value !== null, (hasDocument) => {
     documentGeneration += 1
 
-    if (!document.value || !history.value) {
+    if (!hasDocument) {
       void handleDocumentCleared()
       return
     }
+
+    // A fresh import establishes identity but is not recoverable until its
+    // first committed edit. Normal edits no longer execute this watcher.
+    activeSessionId ??= createId()
+  })
+
+  watch(editVersion, () => {
+    if (!document.value || !history.value) return
 
     if (suppressNextSchedule) {
       suppressNextSchedule = false
       return
     }
 
-    // Normally set explicitly by resumeSession() before restoreSession() runs;
-    // this covers a fresh import, which useAutoSave otherwise cannot
-    // distinguish from any other document/history change.
+    // Normally established by the document-presence watcher or explicitly
+    // by resumeSession(). Keep this fallback for a commit in the same tick as
+    // a programmatic import.
     activeSessionId ??= createId()
 
     scheduleSave()
@@ -886,7 +896,6 @@ export function useAutoSave(params: UseAutoSaveParams) {
     const target = restorableById.get(targetId)
     if (!target) return
 
-    suppressNextSchedule = true
     activeSessionId = target.sessionId
     activeRevision = target.revision
     sessionConflictActive = false

@@ -12,6 +12,7 @@ const { theme, toggleTheme } = useTheme()
 const {
   document,
   history,
+  editVersion,
   lastExported,
   errorMessage,
   isImporting,
@@ -53,6 +54,7 @@ const {
 } = useAutoSave({
   document,
   history,
+  editVersion,
   lastExported,
   restoreSession,
   restoreOriginal: restoreOriginalDocument,

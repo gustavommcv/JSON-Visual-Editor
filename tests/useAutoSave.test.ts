@@ -1,4 +1,4 @@
-import { effectScope, nextTick, shallowRef, type EffectScope } from 'vue'
+import { effectScope, nextTick, ref, shallowRef, type EffectScope } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createJsonHistory } from '@/core/json/history'
@@ -376,6 +376,7 @@ describe('useAutoSave', () => {
     vi.stubGlobal('indexedDB', fake.factory)
     const document = shallowRef<LoadedJsonDocument | null>(null)
     const history = shallowRef<ReturnType<typeof createJsonHistory> | null>(null)
+    const editVersion = ref(0)
     const lastExported = shallowRef<JsonValue>()
     const restoreSession = vi.fn<UseAutoSaveParams['restoreSession']>()
     const restoreOriginal = vi.fn<UseAutoSaveParams['restoreOriginal']>(() => false)
@@ -384,6 +385,7 @@ describe('useAutoSave', () => {
     const params: UseAutoSaveParams = {
       document,
       history,
+      editVersion,
       lastExported,
       restoreSession,
       restoreOriginal,
@@ -400,6 +402,7 @@ describe('useAutoSave', () => {
       scope,
       document,
       history,
+      editVersion,
       lastExported,
       restoreSession,
       restoreOriginal,
@@ -432,6 +435,7 @@ describe('useAutoSave', () => {
       past: [current.current],
       present: next,
     }
+    harness.editVersion.value += 1
     await nextTick()
   }
 
@@ -497,6 +501,29 @@ describe('useAutoSave', () => {
 
     expect(fake.writes).toHaveLength(1)
     expect(fake.record).toEqual(expect.objectContaining({ current: 'first-edit' }))
+  })
+
+  it('does not schedule from document/history replacements without a committed-edit signal', async () => {
+    const fake = new FakeIndexedDb()
+    const harness = setup(fake)
+    await flushAsyncWork()
+    await loadDocument(harness, 'v0')
+
+    const loaded = harness.document.value
+    if (!loaded) throw new Error('No document loaded to edit.')
+    harness.document.value = { ...loaded, current: 'v1' }
+    harness.history.value = { ...createJsonHistory('v0'), past: ['v0'], present: 'v1' }
+    await nextTick()
+    await flushAutoSave()
+
+    expect(fake.writes).toHaveLength(0)
+
+    harness.editVersion.value += 1
+    await nextTick()
+    await flushAutoSave()
+
+    expect(fake.writes).toHaveLength(1)
+    expect(fake.record).toEqual(expect.objectContaining({ current: 'v1' }))
   })
 
   it('[AS-01 proofs 2, 3, 5] never starts a second write while one is in flight, and a delayed write cannot overwrite the newer state that follows it', async () => {
@@ -964,6 +991,7 @@ describe('useAutoSave', () => {
     const params: UseAutoSaveParams = {
       document,
       history,
+      editVersion: ref(0),
       lastExported,
       restoreSession: vi.fn(),
       restoreOriginal: vi.fn(() => false),
