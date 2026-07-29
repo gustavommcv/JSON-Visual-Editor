@@ -113,6 +113,28 @@ describe('JSON snapshot history', () => {
     expect(redoJsonHistory(branched)).toBe(branched)
   })
 
+  it('retains immutable operation snapshots so unchanged branches stay shared', () => {
+    const history = createJsonHistory({
+      metadata: { title: 'Before' },
+      projects: [{ id: 1 }, { id: 2 }],
+    })
+    const projects = (history.present as { projects: JsonValue }).projects
+    const operation = applyJsonOperation(history.present, {
+      kind: 'set-value',
+      path: ['metadata', 'title'],
+      value: 'After',
+    })
+    expect(operation.ok).toBe(true)
+    if (!operation.ok) return
+
+    const committed = commitJsonHistory(history, operation.value)
+
+    expect(committed.present).toBe(operation.value)
+    expect((committed.present as { projects: JsonValue }).projects).toBe(projects)
+    expect(undoJsonHistory(committed).present).toBe(history.present)
+    expect(redoJsonHistory(undoJsonHistory(committed)).present).toBe(operation.value)
+  })
+
   it('limits stack usage and keeps the most recent snapshots', () => {
     let history = createJsonHistory(0, 3)
     for (let value = 1; value <= 5; value += 1) {

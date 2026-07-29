@@ -54,7 +54,11 @@ export function commitJsonHistory(
   return {
     ...state,
     past,
-    present: cloneJsonValue(nextValue),
+    // Editor operations are immutable, so retaining their snapshot keeps
+    // unchanged branches shared across history entries. Besides avoiding a
+    // full-document clone, this lets equality/diff computations stop at
+    // unchanged subtrees instead of walking the whole document per edit.
+    present: nextValue,
     future: [],
     grouping: groupKey ? { key: groupKey, lastChangeAt: timestamp } : null,
   }

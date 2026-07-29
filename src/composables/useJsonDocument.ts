@@ -12,7 +12,6 @@ import {
 } from '@/core/json/history'
 import {
   applyJsonOperation,
-  cloneJsonValue,
   getJsonValueAtPath,
   type JsonEditorOperation,
 } from '@/core/json/operations'
@@ -113,13 +112,15 @@ export function useJsonDocument() {
         return false
       }
 
+      const initialHistory = createJsonHistory(result.value)
+      const initialSnapshot = initialHistory.present
       document.value = {
         fileName: file.name,
-        original: cloneJsonValue(result.value),
-        current: cloneJsonValue(result.value),
+        original: initialSnapshot,
+        current: initialSnapshot,
       }
-      history.value = createJsonHistory(result.value)
-      lastExported.value = cloneJsonValue(result.value)
+      history.value = initialHistory
+      lastExported.value = initialSnapshot
       operationError.value = null
       return true
     } catch {
@@ -212,7 +213,7 @@ export function useJsonDocument() {
       operationError.value = result.error
       return false
     }
-    lastExported.value = cloneJsonValue(document.value.current)
+    lastExported.value = document.value.current
     operationError.value = null
     return true
   }
