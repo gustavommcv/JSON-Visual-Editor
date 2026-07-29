@@ -239,6 +239,7 @@ html {
   min-width: 0;
   min-height: 100%;
   scroll-behavior: smooth;
+  scroll-padding-bottom: 80px;
 }
 
 body {
@@ -284,6 +285,10 @@ a,
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-height: 100vh;
+}
+
+.app-shell--with-auto-save {
+  padding-bottom: 68px;
 }
 
 .site-header,
@@ -833,6 +838,125 @@ h1 em {
   font-size: 9px;
 }
 
+.auto-save-indicator {
+  position: fixed;
+  z-index: 900;
+  right: clamp(14px, 3vw, 32px);
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  max-width: calc(100vw - 28px);
+  min-height: 40px;
+  padding: 8px 11px;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  font-size: 11px;
+  font-weight: 650;
+  pointer-events: none;
+}
+
+.auto-save-indicator__dirty,
+.auto-save-indicator__state {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.auto-save-indicator__dirty {
+  color: var(--warning);
+}
+
+.auto-save-indicator__dirty > span {
+  color: var(--warning-accent);
+  font-size: 8px;
+}
+
+.auto-save-indicator__divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+}
+
+.auto-save-indicator__state--saved,
+.auto-save-indicator__state--local {
+  color: var(--green);
+}
+
+.auto-save-indicator__state--failed {
+  position: relative;
+  color: var(--error);
+  cursor: help;
+  pointer-events: auto;
+}
+
+.auto-save-indicator__icon {
+  display: inline-grid;
+  width: 14px;
+  height: 14px;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.auto-save-indicator__spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--line);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: auto-save-spin 700ms linear infinite;
+}
+
+.auto-save-indicator__tooltip {
+  position: absolute;
+  right: -8px;
+  bottom: calc(100% + 14px);
+  width: min(310px, calc(100vw - 28px));
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--error-border);
+  border-radius: 9px;
+  box-shadow: var(--shadow);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
+}
+
+.auto-save-indicator__state--failed:hover .auto-save-indicator__tooltip,
+.auto-save-indicator__state--failed:focus-visible .auto-save-indicator__tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.save-state-enter-active,
+.save-state-leave-active {
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.save-state-enter-from,
+.save-state-leave-to {
+  opacity: 0;
+  transform: translateY(2px);
+}
+
+@keyframes auto-save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .path-breadcrumb {
   display: flex;
   min-width: 0;
@@ -1083,6 +1207,7 @@ h1 em {
   max-height: min(72vh, 820px);
   min-height: 240px;
   padding: clamp(18px, 3vw, 32px);
+  scroll-padding-bottom: 80px;
   overflow: auto;
   overscroll-behavior: contain;
   background:
@@ -2312,6 +2437,12 @@ h1 em {
     padding-block: 42px;
   }
 
+  .auto-save-indicator {
+    right: 14px;
+    left: 14px;
+    justify-content: space-between;
+  }
+
   h1 {
     font-size: 44px;
   }
@@ -2456,6 +2587,10 @@ h1 em {
   *::after {
     scroll-behavior: auto !important;
     transition: none !important;
+  }
+
+  .auto-save-indicator__spinner {
+    animation: none;
   }
 }
 

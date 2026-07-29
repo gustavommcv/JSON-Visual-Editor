@@ -7,6 +7,7 @@ import type { JsonValue, LoadedJsonDocument } from '@/core/json/types'
 
 import {
   AUTO_SAVE_DEBOUNCE_MS,
+  AUTO_SAVE_SUCCESS_VISIBLE_MS,
   useAutoSave,
   type UseAutoSaveParams,
 } from '@/composables/useAutoSave'
@@ -491,6 +492,9 @@ describe('useAutoSave', () => {
     await loadDocument(harness, 'first')
 
     await editDocument(harness, 'first-edit')
+    expect(harness.autoSave.isSavePending.value).toBe(true)
+    expect(harness.autoSave.isSaving.value).toBe(false)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(false)
     await vi.advanceTimersByTimeAsync(AUTO_SAVE_DEBOUNCE_MS - 1)
     await flushAsyncWork()
     expect(fake.writes).toHaveLength(0)
@@ -500,6 +504,15 @@ describe('useAutoSave', () => {
 
     expect(fake.writes).toHaveLength(1)
     expect(fake.record).toEqual(expect.objectContaining({ current: 'first-edit' }))
+    expect(harness.autoSave.isSavePending.value).toBe(false)
+    expect(harness.autoSave.isSaving.value).toBe(false)
+    expect(harness.autoSave.lastSaveSucceeded.value).toBe(true)
+    expect(harness.autoSave.lastSaveFailed.value).toBe(false)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(AUTO_SAVE_SUCCESS_VISIBLE_MS)
+    expect(harness.autoSave.lastSaveSucceeded.value).toBe(false)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(true)
   })
 
   it('does not schedule from document/history replacements without a committed-edit signal', async () => {
@@ -574,9 +587,13 @@ describe('useAutoSave', () => {
 
     harness.editVersion.value += 1
     await nextTick()
+    expect(harness.autoSave.isSavePending.value).toBe(true)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(false)
     await flushAutoSave()
 
     expect(fake.writes).toHaveLength(1)
+    expect(harness.autoSave.lastSaveSucceeded.value).toBe(true)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(true)
   })
 
   it('[AS-01 proofs 2, 3, 5] never starts a second write while one is in flight, and a delayed write cannot overwrite the newer state that follows it', async () => {
@@ -590,6 +607,8 @@ describe('useAutoSave', () => {
     await flushAutoSave()
     expect(fake.writes).toHaveLength(1) // the first write was attempted...
     expect(fake.allRecords).toHaveLength(0) // ...but its gated transaction has not completed
+    expect(harness.autoSave.isSaving.value).toBe(true)
+    expect(harness.autoSave.lastSaveSucceeded.value).toBe(false)
 
     // Proof 2/3: further rapid edits while that write is still in flight
     // must never start a second, concurrent write attempt.
@@ -612,6 +631,9 @@ describe('useAutoSave', () => {
     expect(secondWrite?.current).toBe('v3')
     expect(secondWrite?.revision).toBeGreaterThan(firstWrite?.revision ?? 0)
     expect(fake.record).toEqual(expect.objectContaining({ current: 'v3', revision: secondWrite?.revision }))
+    expect(harness.autoSave.isSaving.value).toBe(false)
+    expect(harness.autoSave.lastSaveSucceeded.value).toBe(true)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(true)
   })
 
   it('coalesces several rapid edits into one write containing only the latest state', async () => {
@@ -655,6 +677,8 @@ describe('useAutoSave', () => {
     expect(fake.writes).toHaveLength(0)
 
     expect(harness.autoSave.downloadDocument('formatted')).toBe(true)
+    expect(harness.autoSave.isSavePending.value).toBe(false)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(false)
     await flushAutoSave()
 
     expect(
@@ -805,16 +829,20 @@ describe('useAutoSave', () => {
     await editDocument(harness, 'v1')
     await flushAutoSave()
     const oldSessionId = (fake.record as PersistedSession).sessionId
+    expect(harness.autoSave.hasSessionSaved.value).toBe(true)
 
     expect(harness.autoSave.downloadDocument('formatted')).toBe(true)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(false)
     await flushAsyncWork()
     await editDocument(harness, 'v2 after download')
+    expect(harness.autoSave.isSavePending.value).toBe(true)
     await flushAutoSave()
 
     expect(fake.allRecords).toHaveLength(1)
     const newRecord = fake.allRecords[0] as PersistedSession
     expect(newRecord.sessionId).not.toBe(oldSessionId)
     expect(newRecord.current).toBe('v2 after download')
+    expect(harness.autoSave.hasSessionSaved.value).toBe(true)
     expect(fake.allStoredRecords).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ recordType: 'tombstone', sessionId: oldSessionId }),
@@ -994,6 +1022,9 @@ describe('useAutoSave', () => {
     expect(harness.autoSave.storageWarning.value).toBe(true)
     expect(harness.autoSave.autoSaveStatus.value).toEqual({ kind: 'quota-exceeded' })
     expect(fake.writes).toHaveLength(1)
+    expect(harness.autoSave.isSaving.value).toBe(false)
+    expect(harness.autoSave.lastSaveFailed.value).toBe(true)
+    expect(harness.autoSave.hasSessionSaved.value).toBe(false)
 
     await editDocument(harness, 'second edit')
     await flushAutoSave()

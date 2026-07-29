@@ -44,6 +44,7 @@ const LEASE_TTL_MS = 5 * 60 * 1000
  * removes repeated work from the active typing/navigation path.
  */
 export const AUTO_SAVE_DEBOUNCE_MS = 4000
+export const AUTO_SAVE_SUCCESS_VISIBLE_MS = 2200
 
 /** Retention policy (AS-04/AS-09): bounds how many recoverable sessions accumulate. */
 const MAX_RECOVERABLE_SESSIONS = 5
@@ -397,6 +398,11 @@ export function useAutoSave(params: UseAutoSaveParams) {
   const otherTabEditing = ref(false)
   const sessionConflict = ref(false)
   const autoSaveStatus = ref<AutoSaveStatus | null>(null)
+  const isSavePending = ref(false)
+  const isSaving = ref(false)
+  const lastSaveSucceeded = ref(false)
+  const lastSaveFailed = ref(false)
+  const hasSessionSaved = ref(false)
 
   /** Backward-compatible single-session view: the most recently saved recoverable session, if any. */
   const pendingResume = computed<SessionPreview | null>(() => recoverableSessions.value[0] ?? null)
@@ -414,6 +420,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
   let suppressNextSchedule = false
   let scheduledSaveTimer: ReturnType<typeof setTimeout> | null = null
   let scheduledSessionId: string | null = null
+  let saveSuccessTimer: ReturnType<typeof setTimeout> | null = null
   let budgetWorker: Worker | null = null
   let nextBudgetRequestId = 1
   const pendingBudgetRequests = new Map<
@@ -572,6 +579,59 @@ export function useAutoSave(params: UseAutoSaveParams) {
     }
   }
 
+  function clearSaveSuccessTimer(): void {
+    if (saveSuccessTimer !== null) clearTimeout(saveSuccessTimer)
+    saveSuccessTimer = null
+  }
+
+  function markSavePending(): void {
+    clearSaveSuccessTimer()
+    isSavePending.value = true
+    isSaving.value = false
+    lastSaveSucceeded.value = false
+    lastSaveFailed.value = false
+    hasSessionSaved.value = false
+  }
+
+  function markSaving(): void {
+    clearSaveSuccessTimer()
+    isSavePending.value = false
+    isSaving.value = true
+    lastSaveSucceeded.value = false
+    lastSaveFailed.value = false
+  }
+
+  function markSaveSucceeded(): void {
+    clearSaveSuccessTimer()
+    isSavePending.value = false
+    isSaving.value = false
+    lastSaveSucceeded.value = true
+    lastSaveFailed.value = false
+    hasSessionSaved.value = true
+    saveSuccessTimer = setTimeout(() => {
+      saveSuccessTimer = null
+      lastSaveSucceeded.value = false
+    }, AUTO_SAVE_SUCCESS_VISIBLE_MS)
+  }
+
+  function markSaveFailed(): void {
+    clearSaveSuccessTimer()
+    isSavePending.value = false
+    isSaving.value = false
+    lastSaveSucceeded.value = false
+    lastSaveFailed.value = true
+    hasSessionSaved.value = false
+  }
+
+  function resetSaveFeedback(): void {
+    clearSaveSuccessTimer()
+    isSavePending.value = false
+    isSaving.value = false
+    lastSaveSucceeded.value = false
+    lastSaveFailed.value = false
+    hasSessionSaved.value = false
+  }
+
   function announceEditing(): void {
     if (!activeSessionId) return
     channel?.postMessage({ type: 'editing', tabId, sessionId: activeSessionId } satisfies SessionBroadcastMessage)
@@ -639,7 +699,12 @@ export function useAutoSave(params: UseAutoSaveParams) {
     const current = document.value.current
     const exportedBaseline = lastExported.value
     const lastPersisted = lastPersistedSnapshots.get(sessionId)
-    if (lastPersisted?.current === current && lastPersisted.lastExported === exportedBaseline) return
+    if (lastPersisted?.current === current && lastPersisted.lastExported === exportedBaseline) {
+      markSaveSucceeded()
+      return
+    }
+
+    markSaving()
 
     const raw = serializeRecoverySession({
       fileName: document.value.fileName,
@@ -657,6 +722,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
     if (activeSessionId !== sessionId) return
     if (byteSize > MAX_SESSION_BYTES_APPROX) {
       autoSaveStatus.value = { kind: 'too-large' }
+      markSaveFailed()
       return
     }
 
@@ -671,13 +737,16 @@ export function useAutoSave(params: UseAutoSaveParams) {
       if (outcome.status === 'conflict') {
         sessionConflictActive = true
         sessionConflict.value = true
+        markSaveFailed()
         return
       }
       activeRevision = raw.revision
       lastPersistedSnapshots.set(sessionId, { current, lastExported: exportedBaseline })
       reportSuccess()
+      markSaveSucceeded()
     } catch (error) {
       reportFailure(error)
+      markSaveFailed()
     }
   }
 
@@ -717,7 +786,10 @@ export function useAutoSave(params: UseAutoSaveParams) {
    * debounce window; tab lifecycle events use it to flush pending work.
    */
   function requestSaveNow(): void {
-    if (!storageAvailable || sessionConflictActive) return
+    if (!storageAvailable || sessionConflictActive) {
+      markSaveFailed()
+      return
+    }
     if (!activeSessionId) return
     const queue = getSessionQueue(activeSessionId)
     if (queue.writeInFlight) {
@@ -731,17 +803,17 @@ export function useAutoSave(params: UseAutoSaveParams) {
     if (scheduledSaveTimer !== null) clearTimeout(scheduledSaveTimer)
     scheduledSaveTimer = null
     scheduledSessionId = null
+    isSavePending.value = false
   }
 
   function scheduleSave(): void {
-    if (
-      !storageAvailable ||
-      sessionConflictActive ||
-      !activeSessionId ||
-      !history.value ||
-      history.value.past.length === 0
-    ) return
+    if (!storageAvailable || sessionConflictActive) {
+      markSaveFailed()
+      return
+    }
+    if (!activeSessionId || !history.value || history.value.past.length === 0) return
     cancelScheduledSave()
+    markSavePending()
     scheduledSessionId = activeSessionId
     scheduledSaveTimer = setTimeout(() => {
       const sessionId = scheduledSessionId
@@ -795,6 +867,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
 
   async function handleDocumentCleared(): Promise<void> {
     cancelScheduledSave()
+    resetSaveFeedback()
     const sessionToClear = activeSessionId
     const revisionToClear = activeRevision
     activeSessionId = null
@@ -903,6 +976,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
     }
     clearInterval(heartbeatTimer)
     clearInterval(staleCheckTimer)
+    clearSaveSuccessTimer()
     if (activeSessionId) {
       channel?.postMessage({ type: 'closing', tabId, sessionId: activeSessionId } satisfies SessionBroadcastMessage)
       void clearLease(activeSessionId)
@@ -981,6 +1055,8 @@ export function useAutoSave(params: UseAutoSaveParams) {
     activeRevision = target.revision
     sessionConflictActive = false
     sessionConflict.value = false
+    resetSaveFeedback()
+    hasSessionSaved.value = true
 
     params.restoreSession({
       fileName: target.fileName,
@@ -1032,6 +1108,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
     suppressNextSchedule = true
     const restored = params.restoreOriginal()
     if (restored) {
+      resetSaveFeedback()
       const sessionToClear = activeSessionId
       const revisionToClear = activeRevision
       if (sessionToClear) {
@@ -1053,6 +1130,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
     const succeeded = params.downloadDocument(formatting)
     if (succeeded && activeSessionId) {
       cancelScheduledSave()
+      resetSaveFeedback()
       const sessionToClear = activeSessionId
       const revisionToClear = activeRevision
       void clearLease(sessionToClear)
@@ -1074,6 +1152,11 @@ export function useAutoSave(params: UseAutoSaveParams) {
     sessionConflict,
     storageWarning,
     autoSaveStatus,
+    isSavePending,
+    isSaving,
+    lastSaveSucceeded,
+    lastSaveFailed,
+    hasSessionSaved,
     resumeSession,
     discardSession,
     discardQuarantinedSession,

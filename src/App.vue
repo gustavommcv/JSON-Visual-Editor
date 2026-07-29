@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
+import AutoSaveIndicator from '@/components/AutoSaveIndicator.vue'
 import JsonMark from '@/components/JsonMark.vue'
 import JsonDocumentEditor from '@/features/editor/JsonDocumentEditor.vue'
 import JsonDropzone from '@/features/import/JsonDropzone.vue'
@@ -45,6 +48,11 @@ const {
   otherTabEditing,
   sessionConflict,
   autoSaveStatus,
+  isSavePending,
+  isSaving,
+  lastSaveSucceeded,
+  lastSaveFailed,
+  hasSessionSaved,
   resumeSession,
   discardSession,
   discardQuarantinedSession,
@@ -70,10 +78,19 @@ const AUTO_SAVE_STATUS_MESSAGE: Record<AutoSaveFailureKind, string> = {
   'too-large': 'This document is too large to auto-save in this browser. Export your work to be safe.',
   transient: 'Auto-save hit a temporary problem. It will keep trying as you continue editing.',
 }
+
+const autoSaveFailureMessage = computed(() => {
+  if (sessionConflict.value) {
+    return 'A newer version of this session was saved from another tab, so auto-save is paused here.'
+  }
+  return autoSaveStatus.value
+    ? AUTO_SAVE_STATUS_MESSAGE[autoSaveStatus.value.kind]
+    : 'Your latest changes could not be saved locally. Try exporting the document.'
+})
 </script>
 
 <template>
-  <div class="app-shell">
+  <div class="app-shell" :class="{ 'app-shell--with-auto-save': document && hasUnexportedChanges }">
     <ResumeSessionPrompt
       v-if="recoverableSessions.length > 0 || quarantinedSessions.length > 0"
       :recoverable-sessions="recoverableSessions"
@@ -231,6 +248,16 @@ const AUTO_SAVE_STATUS_MESSAGE: Record<AutoSaveFailureKind, string> = {
         />
       </section>
     </main>
+
+    <AutoSaveIndicator
+      v-if="document && hasUnexportedChanges"
+      :is-pending="isSavePending"
+      :is-saving="isSaving"
+      :last-save-succeeded="lastSaveSucceeded"
+      :last-save-failed="lastSaveFailed || sessionConflict"
+      :has-session-saved="hasSessionSaved"
+      :failure-message="autoSaveFailureMessage"
+    />
 
     <footer class="site-footer">
       <p>Built to make structured data easier to understand.</p>
