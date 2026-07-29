@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 
-import { getPersistedSessionByteSize, type PersistedSession } from '@/core/json/sessionStorage'
+import { measurePersistedSessionByteSize } from '@/core/json/sessionBudget'
+import type { PersistedSession } from '@/core/json/sessionStorage'
 
 export interface SessionBudgetWorkerRequest {
   requestId: number
@@ -17,7 +18,7 @@ self.addEventListener('message', (event: MessageEvent<SessionBudgetWorkerRequest
     const response: SessionBudgetWorkerResponse = {
       requestId,
       ok: true,
-      byteSize: getPersistedSessionByteSize(record),
+      byteSize: measurePersistedSessionByteSize(record),
     }
     self.postMessage(response)
   } catch (error) {

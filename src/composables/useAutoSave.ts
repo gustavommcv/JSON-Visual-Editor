@@ -43,7 +43,7 @@ const LEASE_TTL_MS = 5 * 60 * 1000
  * Lifecycle events flush a pending save immediately, so the delay only
  * removes repeated work from the active typing/navigation path.
  */
-export const AUTO_SAVE_DEBOUNCE_MS = 4000
+export const AUTO_SAVE_DEBOUNCE_MS = 5000
 export const AUTO_SAVE_SUCCESS_VISIBLE_MS = 2200
 
 /** Retention policy (AS-04/AS-09): bounds how many recoverable sessions accumulate. */
@@ -799,11 +799,11 @@ export function useAutoSave(params: UseAutoSaveParams) {
     void runSave(activeSessionId)
   }
 
-  function cancelScheduledSave(): void {
+  function cancelScheduledSave(clearPending = true): void {
     if (scheduledSaveTimer !== null) clearTimeout(scheduledSaveTimer)
     scheduledSaveTimer = null
     scheduledSessionId = null
-    isSavePending.value = false
+    if (clearPending) isSavePending.value = false
   }
 
   function scheduleSave(): void {
@@ -812,7 +812,10 @@ export function useAutoSave(params: UseAutoSaveParams) {
       return
     }
     if (!activeSessionId || !history.value || history.value.past.length === 0) return
-    cancelScheduledSave()
+    // Reset only the trailing timer. Keeping the already-pending flag true
+    // avoids a false -> true reactive pulse (and a redundant app update) on
+    // every committed keystroke in a rapid editing burst.
+    cancelScheduledSave(false)
     markSavePending()
     scheduledSessionId = activeSessionId
     scheduledSaveTimer = setTimeout(() => {

@@ -1,4 +1,4 @@
-import { effectScope, nextTick, ref, shallowRef, type EffectScope } from 'vue'
+import { effectScope, nextTick, ref, shallowRef, watch, type EffectScope } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createJsonHistory } from '@/core/json/history'
@@ -647,6 +647,28 @@ describe('useAutoSave', () => {
 
     expect(fake.writes).toHaveLength(1)
     expect(fake.record).toEqual(expect.objectContaining({ current: 'v5' }))
+  })
+
+  it('keeps pending feedback stable while rapid edits only reset the trailing timer', async () => {
+    const fake = new FakeIndexedDb()
+    const harness = setup(fake)
+    await flushAsyncWork()
+    await loadDocument(harness, 'v0')
+
+    const transitions: boolean[] = []
+    const stop = watch(
+      harness.autoSave.isSavePending,
+      (pending) => transitions.push(pending),
+      { flush: 'sync' },
+    )
+
+    await editDocument(harness, 'v1')
+    await editDocument(harness, 'v2')
+    await editDocument(harness, 'v3')
+
+    expect(transitions).toEqual([true])
+    expect(fake.writes).toHaveLength(0)
+    stop()
   })
 
   it('restarts the debounce window after each edit in a burst', async () => {
