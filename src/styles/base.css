@@ -31,6 +31,8 @@
   --green-strong: #1c4a36;
   --green-bright: #b9f37c;
   --green-soft: #e2f4d2;
+  --json-mark-surface: var(--green-soft);
+  --json-mark-glyph: var(--green);
   --live-dot: #65a342;
   --live-dot-ring: rgba(101, 163, 66, 0.12);
 
@@ -353,20 +355,27 @@ a,
   font-weight: 700;
 }
 
-.brand__mark,
-.file-mark {
-  display: grid;
-  place-items: center;
-  font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
-  font-weight: 500;
+.json-mark {
+  display: block;
+  overflow: visible;
+}
+
+.json-mark__surface {
+  fill: var(--json-mark-surface);
+}
+
+.json-mark__glyph {
+  fill: none;
+  stroke: var(--json-mark-glyph);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
 }
 
 .brand__mark {
+  flex: 0 0 auto;
   width: 34px;
   height: 34px;
-  color: var(--green-bright);
-  background: var(--green);
-  border-radius: 9px;
 }
 
 .local-pill {
@@ -715,10 +724,7 @@ h1 em {
 .file-mark {
   flex: 0 0 auto;
   width: 58px;
-  height: 64px;
-  color: var(--green);
-  background: var(--green-soft);
-  border-radius: 13px;
+  height: 58px;
 }
 
 .document-card__name {
@@ -1073,6 +1079,7 @@ h1 em {
 }
 
 .editor-workspace {
+  contain: layout paint inline-size;
   max-height: min(72vh, 820px);
   min-height: 240px;
   padding: clamp(18px, 3vw, 32px);

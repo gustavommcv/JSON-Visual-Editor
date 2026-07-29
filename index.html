@@ -20,8 +20,6 @@
           var stored = localStorage.getItem(STORAGE_KEY);
           if (stored === 'light' || stored === 'dark') {
             theme = stored;
-          } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            theme = 'dark';
           }
         } catch (error) {
           theme = 'light';
@@ -33,7 +31,7 @@
         if (meta) meta.setAttribute('content', theme === 'dark' ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
       })();
     </script>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon-dark.svg" />
     <link rel="canonical" href="https://gustavommcv.github.io/JSON-Visual-Editor/" />
     <title>JSON Visual Editor — Edit &amp; Compare JSON in Your Browser</title>
 
@@ -46,7 +44,7 @@
     />
     <meta property="og:url" content="https://gustavommcv.github.io/JSON-Visual-Editor/" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="https://gustavommcv.github.io/JSON-Visual-Editor/favicon.svg" />
+    <meta property="og:image" content="https://gustavommcv.github.io/JSON-Visual-Editor/favicon-dark.svg" />
     <meta property="og:image:type" content="image/svg+xml" />
     <meta property="og:image:alt" content="The JSON Visual Editor logo: a { } mark in a rounded green square." />
 
@@ -56,7 +54,7 @@
       name="twitter:description"
       content="Open and understand JSON files visually, with local processing in your browser."
     />
-    <meta name="twitter:image" content="https://gustavommcv.github.io/JSON-Visual-Editor/favicon.svg" />
+    <meta name="twitter:image" content="https://gustavommcv.github.io/JSON-Visual-Editor/favicon-dark.svg" />
     <meta name="twitter:image:alt" content="The JSON Visual Editor logo: a { } mark in a rounded green square." />
 
     <script type="application/ld+json">

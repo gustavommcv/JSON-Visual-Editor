@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import JsonMark from '@/components/JsonMark.vue'
 import type { JsonRootSummary } from '@/core/json/analyzer'
 
 defineProps<{
@@ -26,7 +27,7 @@ const emit = defineEmits<{
     </div>
 
     <div class="document-card__identity">
-      <div class="file-mark" aria-hidden="true">{ }</div>
+      <JsonMark class="file-mark" />
       <div class="document-card__name">
         <p class="eyebrow">Imported document</p>
         <h2 id="document-title">{{ fileName }}</h2>

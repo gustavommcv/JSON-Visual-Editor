@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import type { JsonRootSummary } from '@/core/json/analyzer'
 import type { JsonChange } from '@/core/json/diff'
@@ -15,6 +15,7 @@ import JsonSearchPanel from '@/features/search/JsonSearchPanel.vue'
 import ConfirmAction from './ConfirmAction.vue'
 import JsonValueEditor from './JsonValueEditor.vue'
 import PathBreadcrumb from './PathBreadcrumb.vue'
+import { useSearchHighlight } from './useSearchHighlight'
 
 const props = defineProps<{
   fileName: string
@@ -43,43 +44,43 @@ const emit = defineEmits<{
 }>()
 
 const activePath = ref<JsonPath>([])
-const highlightedPath = ref<JsonPath | null>(null)
 const comparisonOpen = ref(false)
 const exportOpen = ref(false)
 const restoreConfirmationOpen = ref(false)
 
-function trackFocusedPath(event: FocusEvent): void {
-  const target = event.target
-  if (!(target instanceof Element)) return
+const {
+  highlightedSearchResultPath,
+  selectSearchResult,
+  handleFocusInteraction,
+  handlePointerInteraction,
+  clearHighlight,
+} = useSearchHighlight()
+
+function pathFromEventTarget(target: EventTarget | null): JsonPath | null {
+  if (!(target instanceof Element)) return null
 
   const editor = target.closest<HTMLElement>('[data-json-path]')
   const serializedPath = editor?.dataset.jsonPath
-  if (!serializedPath) return
+  if (!serializedPath) return null
 
   try {
     const parsed: unknown = JSON.parse(serializedPath)
-    if (isJsonPath(parsed)) activePath.value = parsed
+    return isJsonPath(parsed) ? parsed : null
   } catch {
-    activePath.value = []
+    return null
   }
+}
+
+function handleWorkspaceFocus(event: FocusEvent): void {
+  const path = pathFromEventTarget(event.target)
+  if (!path) return
+  activePath.value = path
+  handleFocusInteraction()
 }
 
 async function navigateToPath(path: JsonPath): Promise<void> {
   activePath.value = [...path]
-  highlightedPath.value = [...path]
-
-  await nextTick()
-  window.setTimeout(() => {
-    const serializedPath = JSON.stringify(path)
-    const candidates = document.querySelectorAll<HTMLElement>('[data-json-path]')
-    const target = [...candidates].find(
-      (element) => element.dataset.jsonPath === serializedPath && element.offsetParent !== null,
-    )
-
-    if (!target) return
-    target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
-    target.focus({ preventScroll: true })
-  }, 0)
+  await selectSearchResult(path)
 }
 
 function navigateToResult(result: JsonSearchResult): Promise<void> {
@@ -96,7 +97,7 @@ function confirmRestore(): void {
   restoreConfirmationOpen.value = false
   emit('restore')
   activePath.value = []
-  highlightedPath.value = []
+  clearHighlight()
 }
 
 function requestDownload(formatting: JsonFormatting): void {
@@ -199,12 +200,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
         <button type="button" aria-label="Close error" @click="emit('clearError')">×</button>
       </div>
 
-      <div class="editor-workspace" @focusin="trackFocusedPath">
+      <div
+        class="editor-workspace"
+        @focusin="handleWorkspaceFocus"
+        @pointerdown.capture="handlePointerInteraction"
+      >
         <JsonValueEditor
           :value="value"
           :path="[]"
           :depth="0"
-          :highlighted-path="highlightedPath"
+          :highlighted-path="highlightedSearchResultPath"
           :image-previews="true"
           @operation="emit('operation', $event)"
         />

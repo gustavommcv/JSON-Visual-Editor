@@ -26,13 +26,13 @@ describe('search engine discoverability', () => {
     expect(html).toMatch(/<meta property="og:title" content="[^"]+" \/>/)
     expect(html).toMatch(/<meta\s+property="og:description"\s+content="[^"]+"\s*\/>/)
     expect(html).toContain(`<meta property="og:url" content="${SITE_URL}" />`)
-    expect(html).toContain(`<meta property="og:image" content="${SITE_URL}favicon.svg" />`)
+    expect(html).toContain(`<meta property="og:image" content="${SITE_URL}favicon-dark.svg" />`)
   })
 
   it('provides a Twitter Card matching the Open Graph image', () => {
     expect(html).toContain('<meta name="twitter:card" content="summary" />')
     expect(html).toMatch(/<meta name="twitter:title" content="[^"]+" \/>/)
-    expect(html).toContain(`<meta name="twitter:image" content="${SITE_URL}favicon.svg" />`)
+    expect(html).toContain(`<meta name="twitter:image" content="${SITE_URL}favicon-dark.svg" />`)
   })
 
   it('embeds well-formed WebApplication structured data', () => {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import JsonMark from '@/components/JsonMark.vue'
 import JsonDocumentEditor from '@/features/editor/JsonDocumentEditor.vue'
 import JsonDropzone from '@/features/import/JsonDropzone.vue'
 import ResumeSessionPrompt from '@/features/import/ResumeSessionPrompt.vue'
@@ -84,7 +85,7 @@ const AUTO_SAVE_STATUS_MESSAGE: Record<AutoSaveFailureKind, string> = {
     <header class="site-header">
       <div class="site-header__start">
         <a class="brand" href="#main-content" aria-label="JSON Visual Editor — skip to content">
-          <span class="brand__mark" aria-hidden="true">{ }</span>
+          <JsonMark class="brand__mark" />
           <span>JSON <strong>Visual Editor</strong></span>
         </a>
         <button
