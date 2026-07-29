@@ -9,7 +9,7 @@ import {
   isPersistedSessionTombstone,
   isValidPersistedSessionRecord,
   migrateLegacySingleSession,
-  serializeSession,
+  serializeRecoverySession,
   type PersistedSession,
   type PersistedSessionTombstone,
   type QuarantinedSessionInfo,
@@ -32,6 +32,13 @@ const BROADCAST_CHANNEL_NAME = 'json-visual-editor-session'
 const TAB_HEARTBEAT_MS = 4000
 const TAB_STALE_MS = 10_000
 const LEASE_TTL_MS = 5 * 60 * 1000
+
+/**
+ * Wait for an editing pause before preparing a full IndexedDB snapshot.
+ * Lifecycle events flush a pending save immediately, so the delay only
+ * removes repeated work from the active typing/navigation path.
+ */
+export const AUTO_SAVE_DEBOUNCE_MS = 4000
 
 /** Retention policy (AS-04/AS-09): bounds how many recoverable sessions accumulate. */
 const MAX_RECOVERABLE_SESSIONS = 5
@@ -398,6 +405,8 @@ export function useAutoSave(params: UseAutoSaveParams) {
   let sessionConflictActive = false
   let documentGeneration = 0
   let suppressNextSchedule = false
+  let scheduledSaveTimer: ReturnType<typeof setTimeout> | null = null
+  let scheduledSessionId: string | null = null
 
   /**
    * Per-session serialized task queue (AS-01/AS-02 hardening). Every write
@@ -555,7 +564,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
     if (!document.value || !history.value) return
     if (history.value.past.length === 0) return // AS-05: nothing committed yet, nothing to recover
 
-    const raw = serializeSession({
+    const raw = serializeRecoverySession({
       fileName: document.value.fileName,
       original: document.value.original,
       current: document.value.current,
@@ -624,11 +633,8 @@ export function useAutoSave(params: UseAutoSaveParams) {
   }
 
   /**
-   * Requests a save right away — no debounce. AS-01: a recoverable change
-   * must start persisting immediately, not after an artificial delay.
-   * visibilitychange/pagehide/beforeunload also call this, purely as
-   * best-effort reinforcement in case a change somehow hasn't been picked
-   * up yet; they are not the primary persistence mechanism.
+   * Requests a save right away. Normal edits reach this only after the
+   * debounce window; tab lifecycle events use it to flush pending work.
    */
   function requestSaveNow(): void {
     if (!storageAvailable || sessionConflictActive) return
@@ -639,6 +645,37 @@ export function useAutoSave(params: UseAutoSaveParams) {
       return
     }
     void runSave(activeSessionId)
+  }
+
+  function cancelScheduledSave(): void {
+    if (scheduledSaveTimer !== null) clearTimeout(scheduledSaveTimer)
+    scheduledSaveTimer = null
+    scheduledSessionId = null
+  }
+
+  function scheduleSave(): void {
+    if (
+      !storageAvailable ||
+      sessionConflictActive ||
+      !activeSessionId ||
+      !history.value ||
+      history.value.past.length === 0
+    ) return
+    cancelScheduledSave()
+    scheduledSessionId = activeSessionId
+    scheduledSaveTimer = setTimeout(() => {
+      const sessionId = scheduledSessionId
+      scheduledSaveTimer = null
+      scheduledSessionId = null
+      if (sessionId === activeSessionId) requestSaveNow()
+    }, AUTO_SAVE_DEBOUNCE_MS)
+  }
+
+  /** Flushes only a genuinely pending edit; lifecycle events stay cheap when nothing changed. */
+  function flushScheduledSave(): void {
+    if (scheduledSaveTimer === null) return
+    cancelScheduledSave()
+    requestSaveNow()
   }
 
   /**
@@ -677,6 +714,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
   }
 
   async function handleDocumentCleared(): Promise<void> {
+    cancelScheduledSave()
     const sessionToClear = activeSessionId
     const revisionToClear = activeRevision
     activeSessionId = null
@@ -707,7 +745,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
     // distinguish from any other document/history change.
     activeSessionId ??= createId()
 
-    requestSaveNow()
+    scheduleSave()
     announceEditing()
   })
 
@@ -728,26 +766,19 @@ export function useAutoSave(params: UseAutoSaveParams) {
     }
   }
 
-  // Saves already fire immediately on every recoverable change (see
-  // requestSaveNow above), so these three handlers are not the primary
-  // persistence mechanism — they are a best-effort reinforcement for the
-  // rare case where the latest change was not already being persisted. If
-  // a write is already in flight, calling requestSaveNow again just
-  // confirms the pending-retry flag (cheap, harmless). If nothing is in
-  // flight, it re-persists the current state even when unchanged since the
-  // last write — a redundant write in that case, not an incorrect one.
-  // None of this can guarantee survival of an ungraceful process kill
-  // (crash, force-quit, power loss) — no web app can.
+  // Flush a pending debounced edit while the browser still gives the page
+  // an opportunity to start its IndexedDB transaction. None of these
+  // events can guarantee survival of a force-kill or power loss.
   function handleVisibilityChange(): void {
-    if (window.document.visibilityState === 'hidden') requestSaveNow()
+    if (window.document.visibilityState === 'hidden') flushScheduledSave()
   }
 
   function handlePageHide(): void {
-    requestSaveNow()
+    flushScheduledSave()
   }
 
   function handleBeforeUnload(): void {
-    requestSaveNow()
+    flushScheduledSave()
     if (activeSessionId) {
       channel?.postMessage({ type: 'closing', tabId, sessionId: activeSessionId } satisfies SessionBroadcastMessage)
       void clearLease(activeSessionId)
@@ -776,6 +807,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
   }
 
   onScopeDispose(() => {
+    cancelScheduledSave()
     if (hasWindow) {
       window.document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('pagehide', handlePageHide)
@@ -906,6 +938,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
     // only thing that stops that: bumping this session's generation (via
     // clearStoredSessions) does not help here, since the watcher's own save
     // request captures a *new*, already-current generation, not a stale one.
+    cancelScheduledSave()
     suppressNextSchedule = true
     const restored = params.restoreOriginal()
     if (restored) {
@@ -929,6 +962,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
   function downloadDocument(formatting: JsonFormatting): boolean {
     const succeeded = params.downloadDocument(formatting)
     if (succeeded && activeSessionId) {
+      cancelScheduledSave()
       const sessionToClear = activeSessionId
       const revisionToClear = activeRevision
       void clearLease(sessionToClear)

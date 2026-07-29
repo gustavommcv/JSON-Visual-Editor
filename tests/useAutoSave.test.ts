@@ -5,7 +5,11 @@ import { createJsonHistory } from '@/core/json/history'
 import { serializeSession, type PersistedSession } from '@/core/json/sessionStorage'
 import type { JsonValue, LoadedJsonDocument } from '@/core/json/types'
 
-import { useAutoSave, type UseAutoSaveParams } from '@/composables/useAutoSave'
+import {
+  AUTO_SAVE_DEBOUNCE_MS,
+  useAutoSave,
+  type UseAutoSaveParams,
+} from '@/composables/useAutoSave'
 
 interface FakeIndexedDbOptions {
   /** Pre-existing stored records, as if written by a previous visit or another tab. */
@@ -330,6 +334,11 @@ async function flushAsyncWork(): Promise<void> {
   await nextTick()
 }
 
+async function flushAutoSave(): Promise<void> {
+  await vi.advanceTimersByTimeAsync(AUTO_SAVE_DEBOUNCE_MS)
+  await flushAsyncWork()
+}
+
 function persistedRecord(current: JsonValue, overrides: Partial<Parameters<typeof serializeSession>[0]> = {}) {
   return serializeSession({
     fileName: 'saved.json',
@@ -467,23 +476,24 @@ describe('useAutoSave', () => {
     expect(fake.allRecords).toHaveLength(3) // hidden for this visit, not discarded
   })
 
-  // AS-01 hardening: persistence used to be debounced by an artificial
-  // 1500ms window. It is now immediate-fire-with-coalescing instead — a
-  // recoverable change starts a write right away, and the only thing that
-  // gets debounced is *how many separate transactions* a burst of rapid
-  // edits produces (still just one), not *when* the first one starts. The
-  // six tests below (this one plus the next three, plus two more in the
-  // "browser event wiring" describe block further down for proof 6) map
-  // directly onto the six proofs required for this contract.
+  // Active editing is intentionally debounced: preparing a large snapshot
+  // is synchronous work, so it must never run in the keystroke path. The
+  // lifecycle tests below prove that a pending edit is still flushed when
+  // the page becomes hidden or starts unloading.
 
-  it('[AS-01 proof 1] starts persisting a recoverable change immediately, without advancing any timer', async () => {
+  it('waits for an editing pause before persisting a recoverable change', async () => {
     const fake = new FakeIndexedDb()
     const harness = setup(fake)
     await flushAsyncWork()
     await loadDocument(harness, 'first')
 
     await editDocument(harness, 'first-edit')
-    await flushAsyncWork() // no vi.advanceTimersByTimeAsync anywhere in this test
+    await vi.advanceTimersByTimeAsync(AUTO_SAVE_DEBOUNCE_MS - 1)
+    await flushAsyncWork()
+    expect(fake.writes).toHaveLength(0)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await flushAsyncWork()
 
     expect(fake.writes).toHaveLength(1)
     expect(fake.record).toEqual(expect.objectContaining({ current: 'first-edit' }))
@@ -497,7 +507,7 @@ describe('useAutoSave', () => {
     await loadDocument(harness, 'v0')
 
     await editDocument(harness, 'v1')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1) // the first write was attempted...
     expect(fake.allRecords).toHaveLength(0) // ...but its gated transaction has not completed
 
@@ -505,7 +515,7 @@ describe('useAutoSave', () => {
     // must never start a second, concurrent write attempt.
     await editDocument(harness, 'v2')
     await editDocument(harness, 'v3')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1)
 
     gate.resolve()
@@ -524,31 +534,58 @@ describe('useAutoSave', () => {
     expect(fake.record).toEqual(expect.objectContaining({ current: 'v3', revision: secondWrite?.revision }))
   })
 
-  it('[AS-01 proof 4] coalesces several rapid edits into a single write reflecting only the latest state', async () => {
-    // Gated deterministically, same as the test above: without an artificial
-    // debounce window, whether an ungated burst of edits actually overlaps
-    // one write's real (micro-task-timed) completion is a race, not a
-    // guarantee — the gate removes that race so this asserts the contract
-    // itself, not how fast the fake IndexedDB happens to resolve.
-    const gate = deferred()
-    const fake = new FakeIndexedDb({ writeGate: gate.promise })
+  it('coalesces several rapid edits into one write containing only the latest state', async () => {
+    const fake = new FakeIndexedDb()
     const harness = setup(fake)
     await flushAsyncWork()
     await loadDocument(harness, 'v0')
 
-    await editDocument(harness, 'v1') // starts the one gated write
+    for (const value of ['v1', 'v2', 'v3', 'v4', 'v5']) await editDocument(harness, value)
+    await flushAutoSave()
+
+    expect(fake.writes).toHaveLength(1)
+    expect(fake.record).toEqual(expect.objectContaining({ current: 'v5' }))
+  })
+
+  it('restarts the debounce window after each edit in a burst', async () => {
+    const fake = new FakeIndexedDb()
+    const harness = setup(fake)
     await flushAsyncWork()
-    for (const value of ['v2', 'v3', 'v4', 'v5']) {
-      await editDocument(harness, value) // all coalesce while v1's write is still in flight
-    }
+    await loadDocument(harness, 'v0')
+
+    await editDocument(harness, 'v1')
+    await vi.advanceTimersByTimeAsync(AUTO_SAVE_DEBOUNCE_MS - 1_000)
+    await editDocument(harness, 'v2')
+    await vi.advanceTimersByTimeAsync(1_000)
+    await flushAsyncWork()
+    expect(fake.writes).toHaveLength(0)
+
+    await vi.advanceTimersByTimeAsync(AUTO_SAVE_DEBOUNCE_MS - 1_000)
     await flushAsyncWork()
     expect(fake.writes).toHaveLength(1)
+    expect(fake.record).toEqual(expect.objectContaining({ current: 'v2' }))
+  })
 
-    gate.resolve()
+  it('cancels a pending debounced save after a successful download', async () => {
+    const fake = new FakeIndexedDb()
+    const harness = setup(fake)
     await flushAsyncWork()
+    await loadDocument(harness, 'v0')
+    await editDocument(harness, 'v1')
+    expect(fake.writes).toHaveLength(0)
 
-    expect(fake.writes).toHaveLength(2)
-    expect(fake.record).toEqual(expect.objectContaining({ current: 'v5' }))
+    expect(harness.autoSave.downloadDocument('formatted')).toBe(true)
+    await flushAutoSave()
+
+    expect(
+      fake.writes.filter(
+        (record) =>
+          typeof record === 'object' &&
+          record !== null &&
+          (record as { recordType?: unknown }).recordType !== 'tombstone',
+      ),
+    ).toHaveLength(0)
+    expect(fake.allRecords).toHaveLength(0)
   })
 
   // AS-02 hardening: an in-flight write's transaction can finish after
@@ -566,7 +603,7 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'first')
     await editDocument(harness, 'first-edit')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1) // write attempted, gated — not yet completed
     expect(fake.allRecords).toHaveLength(0)
 
@@ -588,7 +625,7 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'first')
     await editDocument(harness, 'first-edit')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1)
     expect(fake.allRecords).toHaveLength(0)
 
@@ -609,7 +646,7 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'first')
     await editDocument(harness, 'first-edit')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1)
     expect(fake.allRecords).toHaveLength(0)
 
@@ -630,9 +667,9 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'v0')
     await editDocument(harness, 'v1')
-    await flushAsyncWork()
+    await flushAutoSave()
     await editDocument(harness, 'v2') // coalesced behind v1
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1)
 
     expect(harness.autoSave.downloadDocument('formatted')).toBe(true)
@@ -652,9 +689,9 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'v0', 'original')
     await editDocument(harness, 'v1')
-    await flushAsyncWork()
+    await flushAutoSave()
     await editDocument(harness, 'v2') // coalesced behind v1
-    await flushAsyncWork()
+    await flushAutoSave()
 
     harness.restoreOriginal.mockImplementation(() => {
       const loaded = harness.document.value
@@ -686,13 +723,13 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'v0')
     await editDocument(harness, 'v1')
-    await flushAsyncWork()
+    await flushAutoSave()
     const oldSessionId = (fake.record as PersistedSession).sessionId
 
     expect(harness.autoSave.downloadDocument('formatted')).toBe(true)
     await flushAsyncWork()
     await editDocument(harness, 'v2 after download')
-    await flushAsyncWork()
+    await flushAutoSave()
 
     expect(fake.allRecords).toHaveLength(1)
     const newRecord = fake.allRecords[0] as PersistedSession
@@ -713,7 +750,7 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'first')
     await editDocument(harness, 'first-edit')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1)
     expect(fake.allRecords).toHaveLength(0)
     const sessionId = (fake.writes[0] as PersistedSession).sessionId
@@ -736,13 +773,13 @@ describe('useAutoSave', () => {
 
     await loadDocument(harnessA, 'from A', 'from A', 'a.json')
     await editDocument(harnessA, 'a-edited')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1) // session A's write attempted, gated
     const sessionIdA = (fake.writes[0] as PersistedSession).sessionId
 
     await loadDocument(harnessB, 'from B', 'from B', 'b.json')
     await editDocument(harnessB, 'b-edited')
-    await flushAsyncWork()
+    await flushAutoSave()
     // Session B's write is attempted independently: A's still-gated write,
     // queued under A's own sessionId, does not block B's.
     expect(fake.writes).toHaveLength(2)
@@ -785,7 +822,7 @@ describe('useAutoSave', () => {
     // The new per-session store works normally after the upgrade.
     await loadDocument(harness, 'after-upgrade')
     await editDocument(harness, 'after-upgrade-edited')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1)
     expect(fake.record).toEqual(expect.objectContaining({ current: 'after-upgrade-edited' }))
   })
@@ -873,14 +910,13 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'first')
     await editDocument(harness, 'first edit')
-
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(harness.autoSave.storageWarning.value).toBe(true)
     expect(harness.autoSave.autoSaveStatus.value).toEqual({ kind: 'quota-exceeded' })
     expect(fake.writes).toHaveLength(1)
 
     await editDocument(harness, 'second edit')
-    await flushAsyncWork()
+    await flushAutoSave()
 
     expect(fake.writes).toHaveLength(1)
     expect(harness.autoSave.storageWarning.value).toBe(true)
@@ -892,13 +928,12 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'first')
     await editDocument(harness, 'first edit')
-
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(harness.autoSave.autoSaveStatus.value).toEqual({ kind: 'write-failure' })
     expect(fake.writes).toHaveLength(1)
 
     await editDocument(harness, 'second edit')
-    await flushAsyncWork()
+    await flushAutoSave()
 
     // a transient/generic failure is retried on the next confirmed change
     expect(fake.writes).toHaveLength(2)
@@ -910,12 +945,12 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'first')
     await editDocument(harness, 'first edit')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(harness.autoSave.autoSaveStatus.value).not.toBeNull()
 
     fake.failWritesWithGenericError = false
     await editDocument(harness, 'second edit')
-    await flushAsyncWork()
+    await flushAutoSave()
 
     expect(harness.autoSave.autoSaveStatus.value).toBeNull()
     expect(harness.autoSave.storageWarning.value).toBe(false)
@@ -978,7 +1013,7 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'active document')
     await editDocument(harness, 'active document edited')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.allRecords).toHaveLength(1)
 
     harness.document.value = null
@@ -999,8 +1034,7 @@ describe('useAutoSave', () => {
     await editDocument(harnessA, 'a-edited')
     await loadDocument(harnessB, 'from tab B', 'from tab B', 'b.json')
     await editDocument(harnessB, 'b-edited')
-
-    await flushAsyncWork()
+    await flushAutoSave()
 
     expect(fake.allRecords).toHaveLength(2)
     const fileNames = fake.allRecords.map((record) => (record as PersistedSession).fileName).sort()
@@ -1019,8 +1053,7 @@ describe('useAutoSave', () => {
     await editDocument(harnessA, 'content A edited')
     await loadDocument(harnessB, 'content B', 'content B', 'same-name.json')
     await editDocument(harnessB, 'content B edited')
-
-    await flushAsyncWork()
+    await flushAutoSave()
 
     expect(fake.allRecords).toHaveLength(2)
     const currents = fake.allRecords.map((record) => (record as PersistedSession).current).sort()
@@ -1033,7 +1066,7 @@ describe('useAutoSave', () => {
     await flushAsyncWork()
     await loadDocument(harness, 'v0')
     await editDocument(harness, 'v1')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(1)
 
     const storedAfterFirstSave = fake.record as PersistedSession
@@ -1046,7 +1079,7 @@ describe('useAutoSave', () => {
     })
 
     await editDocument(harness, 'v2 from this tab, now stale')
-    await flushAsyncWork()
+    await flushAutoSave()
 
     expect(harness.autoSave.sessionConflict.value).toBe(true)
     expect((fake.record as PersistedSession).current).toBe('from another tab') // never clobbered
@@ -1054,7 +1087,7 @@ describe('useAutoSave', () => {
     // The conflict is sticky: further edits in this tab do not attempt more writes.
     const writesBefore = fake.writes.length
     await editDocument(harness, 'v3, still stale')
-    await flushAsyncWork()
+    await flushAutoSave()
     expect(fake.writes).toHaveLength(writesBefore)
   })
 
@@ -1085,7 +1118,7 @@ describe('useAutoSave', () => {
     ])
 
     await editDocument(oldTab, 'old tab edit after deletion')
-    await flushAsyncWork()
+    await flushAutoSave()
 
     expect(fake.allRecords).toHaveLength(0)
     expect(oldTab.autoSave.sessionConflict.value).toBe(true)
@@ -1111,7 +1144,7 @@ describe('useAutoSave', () => {
     await nextTick()
 
     await editDocument(harness, 'edited after resume')
-    await flushAsyncWork()
+    await flushAutoSave()
 
     expect(harness.autoSave.sessionConflict.value).toBe(false)
     expect((fake.record as PersistedSession).current).toBe('edited after resume')
@@ -1235,17 +1268,13 @@ describe('useAutoSave', () => {
    * does not claim it is.
    */
   describe('browser event wiring (visibilitychange/pagehide/beforeunload)', () => {
-    it('persists a change immediately without any window event ever firing [AS-01 proof 6]', async () => {
-      // No FakeWindow/vi.stubGlobal('window', ...) at all in this test —
-      // hasWindow is false, exactly like every other test in this file —
-      // yet the write below still happens, proving these events are not
-      // the mechanism that makes persistence happen.
+    it('persists after the debounce without requiring a window lifecycle event', async () => {
       const fake = new FakeIndexedDb()
       const harness = setup(fake)
       await flushAsyncWork()
       await loadDocument(harness, 'first')
       await editDocument(harness, 'first-edit')
-      await flushAsyncWork()
+      await flushAutoSave()
 
       expect(fake.writes).toHaveLength(1)
     })
@@ -1259,16 +1288,13 @@ describe('useAutoSave', () => {
       await loadDocument(harness, 'first')
       await editDocument(harness, 'first-edit')
       await flushAsyncWork()
-      expect(fake.writes).toHaveLength(1) // already persisted before any event fires
+      expect(fake.writes).toHaveLength(0)
 
       fakeWindow.document.visibilityState = 'hidden'
       fakeWindow.document.dispatch('visibilitychange')
       await flushAsyncWork()
 
-      // Confirms the listener is registered on window.document and its
-      // handler does call into the real save path (reinforcement, not the
-      // primary mechanism — see the block comment above).
-      expect(fake.writes).toHaveLength(2)
+      expect(fake.writes).toHaveLength(1)
     })
 
     it('triggers a save attempt when pagehide fires', async () => {
@@ -1280,12 +1306,12 @@ describe('useAutoSave', () => {
       await loadDocument(harness, 'first')
       await editDocument(harness, 'first-edit')
       await flushAsyncWork()
-      expect(fake.writes).toHaveLength(1)
+      expect(fake.writes).toHaveLength(0)
 
       fakeWindow.dispatch('pagehide')
       await flushAsyncWork()
 
-      expect(fake.writes).toHaveLength(2)
+      expect(fake.writes).toHaveLength(1)
     })
 
     it('triggers a save attempt when beforeunload fires', async () => {
@@ -1297,12 +1323,12 @@ describe('useAutoSave', () => {
       await loadDocument(harness, 'first')
       await editDocument(harness, 'first-edit')
       await flushAsyncWork()
-      expect(fake.writes).toHaveLength(1)
+      expect(fake.writes).toHaveLength(0)
 
       fakeWindow.dispatch('beforeunload')
       await flushAsyncWork()
 
-      expect(fake.writes).toHaveLength(2)
+      expect(fake.writes).toHaveLength(1)
     })
 
     it('removes its visibilitychange/pagehide/beforeunload listeners when its scope is disposed', async () => {
@@ -1331,7 +1357,7 @@ describe('useAutoSave', () => {
       await flushAsyncWork()
       await loadDocument(harness, 'first')
       await editDocument(harness, 'first-edit')
-      await flushAsyncWork()
+      await flushAutoSave()
       expect(fake.writes).toHaveLength(1)
 
       harness.scope.stop()
@@ -1344,7 +1370,7 @@ describe('useAutoSave', () => {
       harness.document.value = { ...current, current: 'after-unmount' }
       harness.history.value = { ...harness.history.value!, past: [current.current], present: 'after-unmount' }
       await nextTick()
-      await flushAsyncWork()
+      await flushAutoSave()
 
       expect(fake.writes).toHaveLength(1) // unchanged
 
