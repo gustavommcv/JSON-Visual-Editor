@@ -2018,15 +2018,24 @@ h1 em {
 }
 
 .resume-dialog {
-  display: grid;
-  width: min(460px, 100%);
+  display: flex;
+  width: min(480px, 100%);
+  max-height: min(640px, 86vh);
   padding: clamp(22px, 4vw, 32px);
-  grid-template-columns: auto 1fr;
+  flex-direction: column;
   gap: 16px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 18px;
   box-shadow: var(--shadow-modal);
+  overflow-y: auto;
+}
+
+.resume-dialog__heading {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
 }
 
 .resume-dialog__mark {
@@ -2045,30 +2054,47 @@ h1 em {
   letter-spacing: -0.02em;
 }
 
-.resume-dialog p {
-  margin-bottom: 16px;
+.resume-dialog__heading p {
+  margin: 0;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.6;
 }
 
-.resume-dialog__details {
+.resume-session-list {
   display: grid;
-  margin: 0 0 20px;
-  padding: 10px 12px;
-  gap: 8px;
-  background: var(--surface);
-  border-radius: 8px;
+  margin: 0;
+  padding: 0;
+  gap: 10px;
+  list-style: none;
 }
 
-.resume-dialog__details div {
+.resume-session-item {
+  display: grid;
+  padding: 12px;
+  gap: 10px;
+  background: var(--surface);
+  border-radius: 10px;
+}
+
+.resume-session-list--quarantine .resume-session-item {
+  background: var(--order-note-bg);
+}
+
+.resume-session-item__details {
+  display: grid;
+  margin: 0;
+  gap: 6px;
+}
+
+.resume-session-item__details div {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
 }
 
-.resume-dialog__details dt {
+.resume-session-item__details dt {
   flex: 0 0 auto;
   color: var(--muted);
   font-size: 9px;
@@ -2077,8 +2103,9 @@ h1 em {
   letter-spacing: 0.08em;
 }
 
-.resume-dialog__details dd {
+.resume-session-item__details dd {
   overflow: hidden;
+  min-width: 0;
   margin: 0;
   color: var(--ink);
   font-size: 12px;
@@ -2087,9 +2114,26 @@ h1 em {
   white-space: nowrap;
 }
 
+.resume-session-item__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.resume-dialog__quarantine {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.resume-dialog__quarantine-note {
+  margin: 0 0 12px;
+  color: var(--order-note-text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .resume-dialog__actions {
   display: flex;
-  grid-column: 1 / -1;
   gap: 8px;
   justify-content: flex-end;
 }
@@ -2340,14 +2384,6 @@ h1 em {
   }
 
   .confirmation-dialog__actions {
-    grid-column: 1;
-  }
-
-  .resume-dialog {
-    grid-template-columns: 1fr;
-  }
-
-  .resume-dialog__actions {
     grid-column: 1;
   }
 

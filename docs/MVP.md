@@ -37,7 +37,7 @@ The MVP uses English as its single application language. User-provided filenames
 - structural comparison;
 - formatted and compact download;
 - responsive and accessible browser interface;
-- temporary browser-only storage.
+- local auto-save to the browser's IndexedDB, offered back as a resumable session on the next visit — see [`README.md`](../README.md#local-auto-save) for exactly what is persisted, when, for how long, and how multiple documents or tabs are kept isolated.
 
 ## Explicitly outside the MVP
 
@@ -131,6 +131,18 @@ The MVP uses English as its single application language. User-provided filenames
 - no interface, history, or search metadata in downloaded JSON;
 - document and history preserved after download.
 
+### Local auto-save
+
+- IndexedDB persistence keyed by a per-document session identity, never by filename alone, so two documents (in one tab over time, or across tabs) never overwrite each other's recovery data;
+- a save starts immediately on each committed edit, with no artificial delay; a burst of rapid changes never runs more than one write at a time and always ends up persisting the latest state, never a stale one — tab hide/unload also nudge a save attempt, purely as best-effort reinforcement, since unload-time async work is not guaranteed to finish;
+- a freshly imported, unedited document does not create a recoverable session;
+- on startup, every recoverable session found is offered individually (filename, last-saved time, size) for the user to resume or discard — never an automatic "most recent" pick;
+- retention capped at 5 recoverable sessions and 7 days, with actively leased sessions exempt from eviction; future-schema records stay quarantined until explicit discard and do not count toward the recoverable cap; persisted history is capped separately (20 entries per side, ~8 MB per session) independently of the 50-step in-editor undo/redo limit;
+- Restore original, a successful download, Remove file, and Discard remove the stored JSON and replace it with a content-free revisioned deletion marker; this prevents suspended tabs from recreating a deleted session, while later edits after Restore/Download start under a new identity;
+- a session already advanced or deleted by another tab is detected atomically via revision/tombstone checks and never silently overwritten or recreated; the losing tab keeps editing locally but stops auto-saving that session, with a visible notice;
+- DB v1 single-slot data is copied into the per-session store when valid and the legacy store is retained, so opening a newer build never silently destroys legacy data;
+- storage failures are classified (unavailable, blocked, quota exceeded, read failure, write failure, document too large, transient) and surfaced with a specific message; only unavailability and a full quota stop further attempts for that session.
+
 ## Final requirement status
 
 | Requirement | Final status | Main evidence |
@@ -151,6 +163,7 @@ The MVP uses English as its single application language. User-provided filenames
 | Responsive layout | Complete | Cards below 760 px, contained tables, and no page-level horizontal overflow |
 | Accessibility | Complete | Native semantics, labels, alerts, visible focus, contrast, dialog focus, and reduced motion |
 | Local processing | Complete | No backend calls; optional remote previews contact only the image host |
+| Local auto-save and session recovery | Complete | `useAutoSave.ts`, `sessionStorage.ts`; per-session identity, retention, multi-tab conflict detection, and classified failure handling covered in `tests/useAutoSave.test.ts` and `src/core/json/sessionStorage.test.ts` |
 | English-only application | Complete | English interface, accessibility text, source messages, tests, HTML metadata, and documentation |
 | User-data language preservation | Complete | Parser, operations, search, and export use literal values; dedicated Portuguese fixtures verify preservation |
 

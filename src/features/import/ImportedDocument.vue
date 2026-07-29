@@ -52,7 +52,7 @@ const emit = defineEmits<{
       <span class="stage-note__number">05</span>
       <div>
         <strong>Recursive editor ready</strong>
-        <p>Edit values and structures below. Everything stays in this browser tab.</p>
+        <p>Edit values and structures below. Your edits stay in this browser and are saved locally as you go.</p>
       </div>
     </div>
 

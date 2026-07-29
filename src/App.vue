@@ -2,7 +2,7 @@
 import JsonDocumentEditor from '@/features/editor/JsonDocumentEditor.vue'
 import JsonDropzone from '@/features/import/JsonDropzone.vue'
 import ResumeSessionPrompt from '@/features/import/ResumeSessionPrompt.vue'
-import { useAutoSave } from '@/composables/useAutoSave'
+import { useAutoSave, type AutoSaveFailureKind } from '@/composables/useAutoSave'
 import { useJsonDocument } from '@/composables/useJsonDocument'
 import { useTheme } from '@/composables/useTheme'
 
@@ -38,11 +38,15 @@ const {
 } = useJsonDocument()
 
 const {
-  pendingResume,
+  recoverableSessions,
+  quarantinedSessions,
   otherTabEditing,
-  storageWarning,
+  sessionConflict,
+  autoSaveStatus,
   resumeSession,
   discardSession,
+  discardQuarantinedSession,
+  dismissRecoverablePrompt,
   restoreOriginal,
   downloadDocument,
 } = useAutoSave({
@@ -53,15 +57,28 @@ const {
   restoreOriginal: restoreOriginalDocument,
   downloadDocument: downloadDocumentFile,
 })
+
+const AUTO_SAVE_STATUS_MESSAGE: Record<AutoSaveFailureKind, string> = {
+  unavailable: "Auto-save isn't available in this browser session. Your edits stay in this tab until you export them.",
+  blocked: 'Auto-save is temporarily blocked, possibly by this document being open in another tab. Your edits are safe for now.',
+  'quota-exceeded': "Your browser's storage is full, so auto-save is paused for this session. Export your work soon so you don't lose it.",
+  'read-failure': "Auto-save couldn't check for a previous session, but you can keep working normally.",
+  'write-failure': "Auto-save couldn't save your latest changes. It will keep trying as you continue editing.",
+  'too-large': 'This document is too large to auto-save in this browser. Export your work to be safe.',
+  transient: 'Auto-save hit a temporary problem. It will keep trying as you continue editing.',
+}
 </script>
 
 <template>
   <div class="app-shell">
     <ResumeSessionPrompt
-      v-if="pendingResume"
-      :preview="pendingResume"
+      v-if="recoverableSessions.length > 0 || quarantinedSessions.length > 0"
+      :recoverable-sessions="recoverableSessions"
+      :quarantined-sessions="quarantinedSessions"
       @resume="resumeSession"
       @discard="discardSession"
+      @discard-quarantined="discardQuarantinedSession"
+      @dismiss="dismissRecoverablePrompt"
     />
 
     <header class="site-header">
@@ -129,14 +146,18 @@ const {
     </header>
 
     <main id="main-content" class="main-content">
-      <div v-if="otherTabEditing || storageWarning" class="session-notices">
-        <p v-if="otherTabEditing" class="session-notice" role="status">
-          This document may be open in another tab. Edits in both tabs are saved to the same slot,
-          so the most recent save wins.
+      <div v-if="otherTabEditing || sessionConflict || autoSaveStatus" class="session-notices">
+        <p v-if="sessionConflict" class="session-notice" role="status">
+          This session was also saved from another tab with a newer version. To avoid overwriting
+          their changes, auto-save is paused here — your edits in this tab are still safe until you
+          close or reload it.
         </p>
-        <p v-if="storageWarning" class="session-notice" role="status">
-          Your browser's storage is full, so auto-save is paused for this session. Your edits are
-          safe for now — export soon so you don't lose them.
+        <p v-else-if="otherTabEditing" class="session-notice" role="status">
+          This document may be open in another tab. Changes are not merged; if both tabs try to
+          save the same revision, auto-save pauses in the tab that loses the conflict.
+        </p>
+        <p v-if="autoSaveStatus" class="session-notice" role="status">
+          {{ AUTO_SAVE_STATUS_MESSAGE[autoSaveStatus.kind] }}
         </p>
       </div>
 
