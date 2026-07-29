@@ -24,8 +24,10 @@ describe('collection card layout', () => {
 
   it('keeps the native details body in normal flow while its card is open', () => {
     expect(component).toMatch(
-      /<details[\s\S]*?class="collection-editor"[\s\S]*?<summary>[\s\S]*?<\/summary>\s*<div class="collection-editor__body">/,
+      /<details[\s\S]*?class="collection-editor"[\s\S]*?<summary>[\s\S]*?<\/summary>\s*<div[^>]*class="collection-editor__body">/,
     )
+    expect(component).toContain('v-if="depth === 0 || bodyMounted"')
+    expect(component).toContain('if (open) bodyMounted.value = true')
     expect(cssBlock(css, '.collection-editor__body')).not.toContain('display: none;')
   })
 

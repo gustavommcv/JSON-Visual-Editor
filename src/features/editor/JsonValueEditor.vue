@@ -66,6 +66,7 @@ const newPropertyKey = ref('')
 const newPropertyType = ref<JsonRootKind>('string')
 const missingCell = ref<string | null>(null)
 const expanded = ref(props.depth < 2)
+const bodyMounted = ref(props.depth < 2)
 const selectedItemIndex = ref<number | null>(null)
 const pendingConfirmation = shallowRef<PendingConfirmation | null>(null)
 
@@ -140,6 +141,7 @@ watch(
   (targetPath) => {
     if (!targetPath || !isJsonPathPrefix(props.path, targetPath)) return
     expanded.value = true
+    bodyMounted.value = true
 
     if (
       viewMode.value === 'table' &&
@@ -158,6 +160,12 @@ watch(
 
 function childPath(segment: string | number): JsonPath {
   return appendJsonPath(props.path, segment)
+}
+
+function handleCollectionToggle(event: Event): void {
+  const open = (event.target as HTMLDetailsElement).open
+  expanded.value = open
+  if (open) bodyMounted.value = true
 }
 
 function pathDataFor(path: JsonPath): string {
@@ -372,7 +380,7 @@ function viewLabel(view: JsonCollectionView): string {
       v-else
       class="collection-editor"
       :open="depth === 0 || expanded"
-      @toggle="expanded = ($event.target as HTMLDetailsElement).open"
+      @toggle="handleCollectionToggle"
     >
       <summary>
         <span class="collapse-indicator" aria-hidden="true">›</span>
@@ -381,7 +389,7 @@ function viewLabel(view: JsonCollectionView): string {
         <span>{{ itemCount }} {{ itemCount === 1 ? 'item' : 'items' }}</span>
       </summary>
 
-      <div class="collection-editor__body">
+      <div v-if="depth === 0 || bodyMounted" class="collection-editor__body">
         <div class="collection-toolbar">
           <div v-if="compatibleViews.length > 1" class="view-switcher" aria-label="View">
             <button
@@ -430,6 +438,14 @@ function viewLabel(view: JsonCollectionView): string {
             <section
               v-for="([key, childValue], index) in objectEntries"
               :key="key"
+              v-memo="[
+                childValue,
+                index,
+                index === objectEntries.length - 1,
+                objectCanReorder,
+                highlightedPath,
+                imagePreviews,
+              ]"
               class="property-field"
               :class="{ 'is-search-highlight': isPathHighlighted(childPath(key)) }"
               :data-json-path="pathDataFor(childPath(key))"
@@ -546,6 +562,14 @@ function viewLabel(view: JsonCollectionView): string {
                   <tr
                     v-for="(row, rowIndex) in arrayValue"
                     :key="rowIndex"
+                    v-memo="[
+                      row,
+                      rowIndex,
+                      rowIndex === arrayValue.length - 1,
+                      highlightedPath,
+                      imagePreviews,
+                      missingCell,
+                    ]"
                     :data-json-path="pathDataFor(childPath(rowIndex))"
                     :class="{ 'is-search-highlight': isPathHighlighted(childPath(rowIndex)) }"
                     tabindex="-1"
@@ -599,6 +623,14 @@ function viewLabel(view: JsonCollectionView): string {
               <article
                 v-for="(row, rowIndex) in arrayValue"
                 :key="rowIndex"
+                v-memo="[
+                  row,
+                  rowIndex,
+                  rowIndex === arrayValue.length - 1,
+                  highlightedPath,
+                  imagePreviews,
+                  missingCell,
+                ]"
                 class="table-card"
                 :class="{ 'is-search-highlight': isPathHighlighted(childPath(rowIndex)) }"
                 :data-json-path="pathDataFor(childPath(rowIndex))"
@@ -676,6 +708,13 @@ function viewLabel(view: JsonCollectionView): string {
             <li
               v-for="(childValue, index) in arrayValue"
               :key="index"
+              v-memo="[
+                childValue,
+                index,
+                index === arrayValue.length - 1,
+                highlightedPath,
+                imagePreviews,
+              ]"
               class="array-item"
               :class="{ 'is-search-highlight': isPathHighlighted(childPath(index)) }"
               :data-json-path="pathDataFor(childPath(index))"
