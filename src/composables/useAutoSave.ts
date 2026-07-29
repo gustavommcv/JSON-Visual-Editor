@@ -3,12 +3,13 @@ import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
 import type { JsonFormatting } from '@/core/json/exporter'
 import type { JsonHistoryState } from '@/core/json/history'
 import {
-  applyStorageBudget,
   deserializeSession,
+  getPersistedSessionByteSize,
   getSessionPreview,
   isPersistedSessionTombstone,
   isValidPersistedSessionRecord,
   migrateLegacySingleSession,
+  MAX_SESSION_BYTES_APPROX,
   serializeRecoverySession,
   type PersistedSession,
   type PersistedSessionTombstone,
@@ -17,6 +18,10 @@ import {
   type SessionPreview,
 } from '@/core/json/sessionStorage'
 import type { JsonValue, LoadedJsonDocument } from '@/core/json/types'
+import type {
+  SessionBudgetWorkerRequest,
+  SessionBudgetWorkerResponse,
+} from '@/workers/sessionBudget.worker'
 
 import type { RestoreSessionInput } from './useJsonDocument'
 
@@ -409,6 +414,70 @@ export function useAutoSave(params: UseAutoSaveParams) {
   let suppressNextSchedule = false
   let scheduledSaveTimer: ReturnType<typeof setTimeout> | null = null
   let scheduledSessionId: string | null = null
+  let budgetWorker: Worker | null = null
+  let nextBudgetRequestId = 1
+  const pendingBudgetRequests = new Map<
+    number,
+    { resolve: (byteSize: number) => void; reject: (error: AutoSaveError) => void }
+  >()
+  const lastPersistedSnapshots = new Map<
+    string,
+    { current: JsonValue; lastExported: JsonValue | undefined }
+  >()
+
+  function rejectPendingBudgetRequests(message: string): void {
+    const error = new AutoSaveError('transient', message)
+    for (const request of pendingBudgetRequests.values()) request.reject(error)
+    pendingBudgetRequests.clear()
+  }
+
+  function getBudgetWorker(): Worker | null {
+    if (budgetWorker) return budgetWorker
+    if (typeof Worker === 'undefined') return null
+    try {
+      budgetWorker = new Worker(new URL('../workers/sessionBudget.worker.ts', import.meta.url), {
+        type: 'module',
+      })
+      budgetWorker.addEventListener('message', (event: MessageEvent<SessionBudgetWorkerResponse>) => {
+        const response = event.data
+        const pending = pendingBudgetRequests.get(response.requestId)
+        if (!pending) return
+        pendingBudgetRequests.delete(response.requestId)
+        if (response.ok) pending.resolve(response.byteSize)
+        else pending.reject(new AutoSaveError('transient', response.message))
+      })
+      budgetWorker.addEventListener('error', () => {
+        rejectPendingBudgetRequests('The background snapshot worker stopped unexpectedly.')
+        budgetWorker?.terminate()
+        budgetWorker = null
+      })
+      return budgetWorker
+    } catch {
+      budgetWorker = null
+      return null
+    }
+  }
+
+  function measureSnapshotInBackground(record: PersistedSession): Promise<number> {
+    const worker = getBudgetWorker()
+    if (!worker) {
+      // Worker is unavailable only in legacy/non-browser environments. Keep
+      // the same deep-safe measurement as a compatibility fallback.
+      return Promise.resolve().then(() => getPersistedSessionByteSize(record))
+    }
+
+    const requestId = nextBudgetRequestId
+    nextBudgetRequestId += 1
+    return new Promise((resolve, reject) => {
+      pendingBudgetRequests.set(requestId, { resolve, reject })
+      try {
+        worker.postMessage({ requestId, record } satisfies SessionBudgetWorkerRequest)
+      } catch {
+        pendingBudgetRequests.delete(requestId)
+        reject(new AutoSaveError('transient', 'Failed to send the recovery snapshot to the background worker.'))
+      }
+    })
+  }
 
   /**
    * Per-session serialized task queue (AS-01/AS-02 hardening). Every write
@@ -451,6 +520,7 @@ export function useAutoSave(params: UseAutoSaveParams) {
     const queue = getSessionQueue(sessionId)
     queue.generation += 1
     queue.pendingWriteRequested = false
+    lastPersistedSnapshots.delete(sessionId)
   }
 
   /**
@@ -566,19 +636,26 @@ export function useAutoSave(params: UseAutoSaveParams) {
     if (!document.value || !history.value) return
     if (history.value.past.length === 0) return // AS-05: nothing committed yet, nothing to recover
 
+    const current = document.value.current
+    const exportedBaseline = lastExported.value
+    const lastPersisted = lastPersistedSnapshots.get(sessionId)
+    if (lastPersisted?.current === current && lastPersisted.lastExported === exportedBaseline) return
+
     const raw = serializeRecoverySession({
       fileName: document.value.fileName,
       original: document.value.original,
-      current: document.value.current,
-      lastExported: lastExported.value,
+      current,
+      lastExported: exportedBaseline,
       history: history.value,
       sessionId,
       ownerTabId: tabId,
       revision: activeRevision + 1,
     })
 
-    const budgeted = applyStorageBudget(raw)
-    if (!budgeted.ok) {
+    const byteSize = await measureSnapshotInBackground(raw)
+    if (getSessionQueue(sessionId).generation !== generationAtRequest) return
+    if (activeSessionId !== sessionId) return
+    if (byteSize > MAX_SESSION_BYTES_APPROX) {
       autoSaveStatus.value = { kind: 'too-large' }
       return
     }
@@ -590,13 +667,14 @@ export function useAutoSave(params: UseAutoSaveParams) {
       // actually matters for a cleanup that arrives while getDatabase() is
       // pending.
       if (getSessionQueue(sessionId).generation !== generationAtRequest) return
-      const outcome = await compareAndWrite(db, budgeted.record)
+      const outcome = await compareAndWrite(db, raw)
       if (outcome.status === 'conflict') {
         sessionConflictActive = true
         sessionConflict.value = true
         return
       }
-      activeRevision = budgeted.record.revision
+      activeRevision = raw.revision
+      lastPersistedSnapshots.set(sessionId, { current, lastExported: exportedBaseline })
       reportSuccess()
     } catch (error) {
       reportFailure(error)
@@ -830,6 +908,9 @@ export function useAutoSave(params: UseAutoSaveParams) {
       void clearLease(activeSessionId)
     }
     channel?.close()
+    rejectPendingBudgetRequests('Auto-save stopped before the background snapshot completed.')
+    budgetWorker?.terminate()
+    budgetWorker = null
   })
 
   async function checkForExistingSessions(): Promise<void> {

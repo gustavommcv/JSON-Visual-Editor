@@ -480,10 +480,9 @@ describe('useAutoSave', () => {
     expect(fake.allRecords).toHaveLength(3) // hidden for this visit, not discarded
   })
 
-  // Active editing is intentionally debounced: preparing a large snapshot
-  // is synchronous work, so it must never run in the keystroke path. The
-  // lifecycle tests below prove that a pending edit is still flushed when
-  // the page becomes hidden or starts unloading.
+  // Active editing is intentionally debounced, and the delayed size pass is
+  // delegated to a worker. The lifecycle tests below prove that a pending
+  // edit is still flushed when the page becomes hidden or starts unloading.
 
   it('waits for an editing pause before persisting a recoverable change', async () => {
     const fake = new FakeIndexedDb()
@@ -524,6 +523,60 @@ describe('useAutoSave', () => {
 
     expect(fake.writes).toHaveLength(1)
     expect(fake.record).toEqual(expect.objectContaining({ current: 'v1' }))
+  })
+
+  it('measures the delayed recovery snapshot in a worker before writing it', async () => {
+    const posted: unknown[] = []
+    let messageListener: ((event: MessageEvent) => void) | null = null
+    const terminate = vi.fn()
+
+    class FakeBudgetWorker {
+      addEventListener(type: string, listener: (event: MessageEvent) => void): void {
+        if (type === 'message') messageListener = listener
+      }
+
+      postMessage(message: unknown): void {
+        posted.push(structuredClone(message))
+        const requestId = (message as { requestId: number }).requestId
+        queueMicrotask(() => messageListener?.({ data: { requestId, ok: true, byteSize: 128 } } as MessageEvent))
+      }
+
+      terminate(): void {
+        terminate()
+      }
+    }
+
+    vi.stubGlobal('Worker', FakeBudgetWorker)
+    const fake = new FakeIndexedDb()
+    const harness = setup(fake)
+    await flushAsyncWork()
+    await loadDocument(harness, 'v0')
+    await editDocument(harness, 'v1')
+
+    await flushAutoSave()
+
+    expect(posted).toHaveLength(1)
+    expect(posted[0]).toEqual(expect.objectContaining({ requestId: 1 }))
+    expect(fake.writes).toHaveLength(1)
+
+    harness.scope.stop()
+    expect(terminate).toHaveBeenCalledOnce()
+  })
+
+  it('skips a requested re-save when the immutable document snapshot has not changed', async () => {
+    const fake = new FakeIndexedDb()
+    const harness = setup(fake)
+    await flushAsyncWork()
+    await loadDocument(harness, 'v0')
+    await editDocument(harness, 'v1')
+    await flushAutoSave()
+    expect(fake.writes).toHaveLength(1)
+
+    harness.editVersion.value += 1
+    await nextTick()
+    await flushAutoSave()
+
+    expect(fake.writes).toHaveLength(1)
   })
 
   it('[AS-01 proofs 2, 3, 5] never starts a second write while one is in flight, and a delayed write cannot overwrite the newer state that follows it', async () => {

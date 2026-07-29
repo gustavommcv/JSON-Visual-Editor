@@ -447,7 +447,7 @@ export function getSessionPreview(input: SessionPreviewInput): SessionPreview {
 // Storage budget (AS-09): cap what gets persisted, not the live undo/redo stack
 // ---------------------------------------------------------------------------
 
-function approxByteSize(record: PersistedSession): number {
+export function getPersistedSessionByteSize(record: PersistedSession): number {
   return jsonByteSize(record)
 }
 
@@ -479,7 +479,7 @@ export function applyStorageBudget(record: PersistedSession): BudgetedSessionRes
   }
 
   let candidate: PersistedSession = { ...record, history: { ...record.history, past, future } }
-  let candidateSize = approxByteSize(candidate)
+  let candidateSize = getPersistedSessionByteSize(candidate)
 
   // Drop future (redo) first, then past (undo), farthest-from-present entries
   // first, until the record fits the byte budget or history is empty.
@@ -491,7 +491,7 @@ export function applyStorageBudget(record: PersistedSession): BudgetedSessionRes
       past = past.slice(1)
     }
     candidate = { ...candidate, history: { ...candidate.history, past, future } }
-    candidateSize = approxByteSize(candidate)
+    candidateSize = getPersistedSessionByteSize(candidate)
   }
 
   if (candidateSize > MAX_SESSION_BYTES_APPROX) {
