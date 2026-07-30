@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 
 import type { JsonRootSummary } from '@/core/json/analyzer'
 import type { JsonChange } from '@/core/json/diff'
@@ -15,6 +15,8 @@ import JsonSearchPanel from '@/features/search/JsonSearchPanel.vue'
 import ConfirmAction from './ConfirmAction.vue'
 import JsonValueEditor from './JsonValueEditor.vue'
 import PathBreadcrumb from './PathBreadcrumb.vue'
+import SemanticInspector from './SemanticInspector.vue'
+import type { SemanticInspectionRequest } from './SemanticBadge.vue'
 import { useSearchHighlight } from './useSearchHighlight'
 
 const props = defineProps<{
@@ -47,6 +49,9 @@ const activePath = ref<JsonPath>([])
 const comparisonOpen = ref(false)
 const exportOpen = ref(false)
 const restoreConfirmationOpen = ref(false)
+const searchOpen = ref(false)
+const semanticSelection = shallowRef<SemanticInspectionRequest | null>(null)
+let semanticTrigger: HTMLElement | null = null
 
 const {
   highlightedSearchResultPath,
@@ -85,6 +90,25 @@ async function navigateToPath(path: JsonPath): Promise<void> {
 
 function navigateToResult(result: JsonSearchResult): Promise<void> {
   return navigateToPath(result.path)
+}
+
+function inspectSemantic(request: SemanticInspectionRequest): void {
+  semanticTrigger = request.trigger
+  semanticSelection.value = request
+}
+
+function closeSemanticInspector(): void {
+  semanticSelection.value = null
+  const trigger = semanticTrigger
+  semanticTrigger = null
+  void nextTick(() => {
+    if (trigger?.isConnected) trigger.focus()
+  })
+}
+
+function handleOperation(operation: JsonEditorOperation): void {
+  if (semanticSelection.value) closeSemanticInspector()
+  emit('operation', operation)
 }
 
 function navigateToChange(change: JsonChange): void {
@@ -139,7 +163,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
     :summary="summary"
     :has-unexported-changes="hasUnexportedChanges"
     @remove="emit('remove')"
-    @download="exportOpen = true"
   >
     <div class="editor-shell">
       <div class="history-toolbar" aria-label="History and comparison">
@@ -183,35 +206,56 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
 
       <div class="editor-shell__toolbar">
         <PathBreadcrumb :path="activePath" />
-        <span
-          class="autosave-note"
-          :class="{ 'autosave-note--dirty': hasUnexportedChanges }"
-          role="status"
-        >
-          <span aria-hidden="true">●</span>
-          {{ hasUnexportedChanges ? 'Unexported changes' : 'Current version exported' }}
-        </span>
+        <div class="editor-shell__toolbar-actions">
+          <span
+            class="autosave-note"
+            :class="{ 'autosave-note--dirty': hasUnexportedChanges }"
+            role="status"
+          >
+            <span aria-hidden="true">●</span>
+            {{ hasUnexportedChanges ? 'Unexported changes' : 'Current version exported' }}
+          </span>
+          <button
+            class="mini-button"
+            type="button"
+            :aria-expanded="searchOpen"
+            aria-controls="document-search"
+            @click="searchOpen = !searchOpen"
+          >⌕ Search</button>
+        </div>
       </div>
 
-      <JsonSearchPanel :value="value" @navigate="navigateToResult" />
+      <div v-if="searchOpen" id="document-search">
+        <JsonSearchPanel :value="value" @navigate="navigateToResult" />
+      </div>
 
       <div v-if="operationError" class="editor-error" role="alert">
         <span>{{ operationError }}</span>
         <button type="button" aria-label="Close error" @click="emit('clearError')">×</button>
       </div>
 
-      <div
-        class="editor-workspace"
-        @focusin="handleWorkspaceFocus"
-        @pointerdown.capture="handlePointerInteraction"
-      >
-        <JsonValueEditor
-          :value="value"
-          :path="[]"
-          :depth="0"
-          :highlighted-path="highlightedSearchResultPath"
-          :image-previews="true"
-          @operation="emit('operation', $event)"
+      <div class="editor-layout" :class="{ 'editor-layout--inspecting': semanticSelection }">
+        <div
+          class="editor-workspace"
+          @focusin="handleWorkspaceFocus"
+          @pointerdown.capture="handlePointerInteraction"
+        >
+          <JsonValueEditor
+            :value="value"
+            :path="[]"
+            :depth="0"
+            :highlighted-path="highlightedSearchResultPath"
+            :image-previews="true"
+            @operation="handleOperation"
+            @inspect-semantic="inspectSemantic"
+          />
+        </div>
+        <SemanticInspector
+          v-if="semanticSelection"
+          :semantic="semanticSelection.semantic"
+          :raw-value="semanticSelection.rawValue"
+          :path="semanticSelection.path"
+          @close="closeSemanticInspector"
         />
       </div>
     </div>

@@ -2,15 +2,17 @@
 
 ## Processing
 
-There is no backend. Importing, editing, undo/redo history, search, comparison, export, and local auto-save all run in your browser; your JSON file is never uploaded or transmitted to a server. There is no analytics or telemetry code in the application, and it makes no network requests of its own while you use it.
+There is no backend. Importing, editing, semantic detection, undo/redo history, search, comparison, export, and local auto-save all run in your browser; your JSON file is never uploaded or transmitted to a server. There is no analytics or telemetry code in the application, and it makes no network requests of its own while you use it.
 
 The only files served by the site that aren't the application itself are static, inert metadata for search engines: `robots.txt`, `sitemap.xml`, and a single-line Google Search Console ownership-verification file. None of these run any code or track visitors.
 
-## Remote images: the one exception
+## Remote media: opt-in
 
-If your JSON contains a string that looks like a remote image URL, the editor can show a small preview of it (see [Editing and views](editing-and-views.md#image-previews)). To do that, **your browser requests that image directly from whatever host the URL points to** — that request is made by the browser, not by this application proxying or relaying it, but it does mean the image's host learns that URL was requested. The interface discloses this next to the preview. Your JSON document itself is never sent as part of that request, and no other part of the application makes outbound requests.
+If your JSON contains a string that looks like a remote image, GIF, or direct video URL, the inspector can preview it (see [Editing and views](editing-and-views.md#content-aware-values-and-inspector)). The editor does not assign that URL to an image or video element automatically. It first shows the destination host and a **Load preview** button.
 
-If your document contains sensitive URLs you don't want requested, avoid opening it somewhere those requests would be logged in a way that concerns you, or be aware that scrolling a field with such a value into view triggers its image preview.
+After you choose **Load preview**, your browser requests the media directly from its host. The host learns that the URL was requested and may receive normal connection metadata such as your IP address; `referrerpolicy="no-referrer"` prevents the application page URL from being sent as the referrer. The application does not proxy the media or send the rest of your JSON. Do not load a preview when the URL contains a credential/token or when contacting its host would be sensitive. Derived URL labels omit credentials and query parameters, while the raw editable value remains visible because it is part of your document.
+
+Ordinary URL and email actions use explicit links. Web links open with `noopener`, `noreferrer`, and a no-referrer policy. The application never embeds arbitrary web pages or executes JSON strings as markup or code.
 
 ## What is stored, and where
 

@@ -31,6 +31,7 @@ import JsonItemDetailsPanel from './JsonItemDetailsPanel.vue'
 import JsonPrimitiveEditor from './JsonPrimitiveEditor.vue'
 import JsonTableCell from './JsonTableCell.vue'
 import JsonTypePicker from './JsonTypePicker.vue'
+import type { SemanticInspectionRequest } from './SemanticBadge.vue'
 
 defineOptions({ name: 'JsonValueEditor' })
 
@@ -50,6 +51,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   operation: [operation: JsonEditorOperation]
+  inspectSemantic: [request: SemanticInspectionRequest]
 }>()
 
 interface PendingConfirmation {
@@ -178,6 +180,10 @@ function isPathHighlighted(path: JsonPath): boolean {
 
 function forwardOperation(operation: JsonEditorOperation): void {
   emit('operation', operation)
+}
+
+function forwardSemanticInspection(request: SemanticInspectionRequest): void {
+  emit('inspectSemantic', request)
 }
 
 function setValue(value: JsonValue): void {
@@ -357,9 +363,10 @@ function viewLabel(view: JsonCollectionView): string {
       v-if="value !== null && !isCollection"
       :value="primitiveValue"
       :label="path.length === 0 ? 'root value' : String(path[path.length - 1])"
-      :show-image-preview="imagePreviews"
+      :path="path"
       @set-value="setValue"
       @change-type="requestTypeChange"
+      @inspect-semantic="forwardSemanticInspection"
     />
 
     <div v-else-if="value === null" class="null-editor">
@@ -502,6 +509,7 @@ function viewLabel(view: JsonCollectionView): string {
                 :highlighted-path="highlightedPath"
                 :image-previews="imagePreviews"
                 @operation="forwardOperation"
+                @inspect-semantic="forwardSemanticInspection"
               />
             </section>
           </div>
@@ -584,6 +592,7 @@ function viewLabel(view: JsonCollectionView): string {
                         :highlighted="isPathHighlighted([...childPath(rowIndex), column])"
                         @operation="handleTableCellOperation($event, row[column] as JsonValue)"
                         @open-details="selectedItemIndex = rowIndex"
+                        @inspect-semantic="forwardSemanticInspection"
                       />
                       <div v-else class="missing-cell">
                         <span v-if="missingCell !== missingCellId(rowIndex, column)">Missing</span>
@@ -658,6 +667,7 @@ function viewLabel(view: JsonCollectionView): string {
                         :highlighted="isPathHighlighted([...childPath(rowIndex), column])"
                         @operation="handleTableCellOperation($event, row[column] as JsonValue)"
                         @open-details="selectedItemIndex = rowIndex"
+                        @inspect-semantic="forwardSemanticInspection"
                       />
                     </dd>
                     <dd v-else class="missing-cell">
@@ -736,6 +746,7 @@ function viewLabel(view: JsonCollectionView): string {
                 :highlighted-path="highlightedPath"
                 :image-previews="imagePreviews"
                 @operation="forwardOperation"
+                @inspect-semantic="forwardSemanticInspection"
               />
             </li>
           </ol>
@@ -779,6 +790,7 @@ function viewLabel(view: JsonCollectionView): string {
         :highlighted-path="highlightedPath"
         :image-previews="true"
         @operation="forwardOperation"
+        @inspect-semantic="forwardSemanticInspection"
       />
     </JsonItemDetailsPanel>
 

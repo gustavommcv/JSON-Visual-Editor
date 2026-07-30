@@ -98,14 +98,13 @@ Table columns follow first-appearance order across items (`[...new Set(items.fla
 
 [`diff.ts`](../../src/core/json/diff.ts) compares `original` and `current` structurally, walking objects and arrays recursively. Object keys are compared as sets (property order is not semantic); array items are compared positionally except for one special case: if two arrays have the same length (≥ 2) and the exact same multiset of items in a different order, the whole array is reported as a single `'reordered'` change instead of per-index `'added'`/`'removed'`/`'changed'` entries. Equality for this purpose is a stable, key-sorted JSON fingerprint (`stableFingerprint`), so two structurally-equal objects with differently-ordered keys still count as "the same item" for reorder detection.
 
-## Image detection
+## Semantic detection
 
-[`image.ts`](../../src/core/json/image.ts) treats a string value as a possible image if either:
+[`semantic.ts`](../../src/core/json/semantic.ts) is a pure, bounded detector for supported primitive interpretations: ISO dates/date-times, plausible Unix timestamps, HTTP(S) URLs, direct raster-image/GIF/video links, common Git hosts, CSS colors, email addresses, UUIDs, long text, embedded JSON, and safe raster `data:image/...` values. Detection is based on content rather than property names and uses a 1,000-entry FIFO cache so unchanged strings do not repeat parsing/URL work during reactive renders.
 
-- it is an `http:`/`https:` URL (≤ 4096 characters, no leading/trailing whitespace) whose path ends in a known raster or vector extension (`apng avif bmp gif ico jpeg jpg png svg webp`) — query strings are ignored for this check; or
-- it is a `data:image/...` URI (≤ 1,000,000 characters) whose declared MIME type is one of `apng avif bmp gif jpeg png webp` — **`data:image/svg+xml` is deliberately excluded**, so an embedded SVG data URI is never rendered as an image, while a *remote* `.svg` URL is still eligible.
+The detector returns metadata only; it cannot emit an editor operation or rewrite the value. `SemanticBadge.vue` turns a result into an optional inspection control, and `SemanticInspector.vue` renders the selected result. Embedded JSON parsing is capped at 20,000 characters, data images at 1,000,000 characters, and remote URLs at 4,096 characters. SVG data, non-HTTP protocols, and arbitrary web pages are excluded.
 
-Detection never rewrites the value; a failed image load falls back to a message without changing the underlying string. `ImagePreview.vue` renders remote images with `referrerpolicy="no-referrer"`, `loading="lazy"`, and `rel="noopener noreferrer"` on the "open image" link, and constrains the preview frame to a maximum height in CSS.
+Remote media sources are assigned to `<img>`/`<video>` only after the user activates **Load preview**. External links use `noopener`, `noreferrer`, and `referrerpolicy="no-referrer"`; derived URL metadata excludes credentials and query strings. None of these presentation rules affect history, comparison, auto-save, or export.
 
 ## Export
 

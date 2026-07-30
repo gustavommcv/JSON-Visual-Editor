@@ -20,9 +20,9 @@ Parsing and rendering both happen on the main thread — there is no Web Worker 
 
 Numbers follow JavaScript's IEEE 754 double-precision behavior. Rather than silently lose precision, the application rejects at parse, edit, and export time: any integer outside `Number.isSafeInteger` range, and any value that isn't finite (see [`parser.ts`](../src/core/json/parser.ts) and [`operations.ts`](../src/core/json/operations.ts)). There is no arbitrary-precision ("big number") representation.
 
-## Image detection is a heuristic
+## Semantic detection is heuristic and deliberately conservative
 
-A value is treated as a possible image based on its shape (a URL ending in a known image extension, or a `data:image/...` prefix) — not by inspecting the actual bytes or content type (see [Editor model](architecture/editor-model.md#image-detection)). This means a URL that merely *looks* like an image can fail to load, and (in principle) a differently-typed resource served from a URL with an image-like extension could be offered a preview. Either way, a failed load only shows a fallback message; the underlying value is never changed by this heuristic.
+Dates, URLs/media, colors, email addresses, UUIDs, long text, embedded JSON, and Git URLs are inferred from the value's syntax, not a schema or network content-type check. A string can therefore remain ordinary when its format is ambiguous, or receive a badge when it merely looks like a supported value. Recognition only adds an optional inspector: it never changes the raw field or export. Remote media can still fail after the user explicitly asks to load it, and arbitrary web pages, SVG data images, non-HTTP protocols, and malformed values are never previewed.
 
 ## Comparison's reorder detection is exact
 

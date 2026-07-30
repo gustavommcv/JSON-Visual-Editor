@@ -18,7 +18,7 @@ src/
 └── styles/               One shared stylesheet
 ```
 
-- **`src/core/json`** is the domain layer: parsing, structural analysis, immutable operations, history, diffing, search, image detection, export, and session (de)serialization. Every file here is plain TypeScript with no Vue dependency, so it is testable in isolation and can't accidentally couple document rules to component state.
+- **`src/core/json`** is the domain layer: parsing, structural and semantic analysis, immutable operations, history, diffing, search, export, and session (de)serialization. Every file here is plain TypeScript with no Vue dependency, so it is testable in isolation and can't accidentally couple document rules to component state. `semantic.ts` is a bounded, memoized detector registry; it derives display metadata but never returns an editor operation.
 - **`src/composables`** hold Vue-reactive state and side effects: [`useJsonDocument`](../../src/composables/useJsonDocument.ts) owns the loaded document, history, and export/restore actions; [`useAutoSave`](../../src/composables/useAutoSave.ts) owns IndexedDB persistence and wraps the subset of `useJsonDocument`'s actions it needs to react to; [`useTheme`](../../src/composables/useTheme.ts) and [`useDialogFocus`](../../src/composables/useDialogFocus.ts) are smaller, single-purpose composables.
 - **`src/features`** contain the UI, grouped by capability: `editor` (the recursive editor, table, dialogs), `import` (drop zone, resume-session prompt), `search`, `comparison`, `export`. Components receive data as props and emit typed operations; they do not mutate the document directly.
 - **`src/workers`** currently has one Web Worker, used by `useAutoSave` to measure a recovery snapshot's size off the main thread.
@@ -36,16 +36,18 @@ flowchart TD
     DocEditor --> Imported[ImportedDocument]
     DocEditor --> Search[JsonSearchPanel]
     DocEditor --> ValueEditor[JsonValueEditor]
+    DocEditor --> Inspector[SemanticInspector]
     DocEditor --> Comparison[JsonComparisonPanel]
     DocEditor --> Export[JsonExportPanel]
     ValueEditor -->|recursive, one per nested value| ValueEditor
     ValueEditor --> TableCell[JsonTableCell]
     ValueEditor --> Details[JsonItemDetailsPanel]
     ValueEditor --> Primitive[JsonPrimitiveEditor]
-    Primitive --> Image[ImagePreview]
+    Primitive --> Badge[SemanticBadge]
+    Badge -->|selection only| Inspector
 ```
 
-`JsonValueEditor` is the only component that renders itself recursively: an object's properties and an array's items are each a nested `JsonValueEditor`, selected by the actual runtime type of the value at that path. This is what makes the editor generic — it never assumes a schema.
+`JsonValueEditor` is the only component that renders itself recursively: an object's properties and an array's items are each a nested `JsonValueEditor`, selected by the actual runtime type of the value at that path. This is what makes the editor generic — it never assumes a schema. Primitive editors ask the pure semantic detector for an optional interpretation and emit a selection request upward; `JsonDocumentEditor` owns the single inspector state, so recursive components never coordinate global panels themselves.
 
 ## Technology choices
 

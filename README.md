@@ -12,7 +12,7 @@ Point it at any `.json` file and it infers a sensible way to display each part o
 - Create, rename, retype, deeply duplicate, delete, and reorder properties and items, with confirmation before anything destructive.
 - A stable table with a union of columns across items, explicit "missing" cells, nested-value summaries, and a details panel for inspecting one item at a time.
 - Global search across property names, values, and paths, with navigation to a highlighted result.
-- Automatic preview for values that look like image URLs or embedded raster image data.
+- Content-aware badges and a contextual inspector for dates, timestamps, URLs, images/GIFs, direct video links, colors, email addresses, UUIDs, long text, embedded JSON, and Git repository URLs.
 - Undo, redo (50 steps each), and one-click restoration of the originally imported document.
 - A structural comparison view (added / removed / changed / reordered) against the original.
 - Download the result as formatted (two-space) or compact JSON.
@@ -78,7 +78,7 @@ Full details, a component map, and the data flow are in [Architecture overview](
 
 ## Privacy and local processing
 
-There is no backend and no analytics. Importing, editing, history, search, comparison, export, and local auto-save all happen in your browser. The one exception: if your JSON contains what looks like a remote image URL, your browser requests that image directly from its host to show a preview — your JSON document itself is never sent anywhere. See [Privacy and local data](docs/user-guide/privacy-and-local-data.md) for the full picture, including exactly what's stored locally and for how long.
+There is no backend and no analytics. Importing, editing, semantic detection, history, search, comparison, export, and local auto-save all happen in your browser. Remote images, GIFs, and videos are never requested automatically: their inspector asks you to load the preview first, and only then does your browser contact that media host. See [Privacy and local data](docs/user-guide/privacy-and-local-data.md) for the full picture, including exactly what's stored locally and for how long.
 
 ## Known limitations
 

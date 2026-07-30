@@ -38,7 +38,7 @@ npx vitest run -t "debounce"
 
 Two locations, by convention:
 
-- **`src/core/json/*.test.ts`** — one test file per domain module, colocated with the module it tests (`operations.ts` ↔ `operations.test.ts`, and so on for `analyzer`, `diff`, `exporter`, `history`, `image`, `parser`, `search`, `sessionBudget`, `sessionStorage`).
+- **`src/core/json/*.test.ts`** — one test file per domain module, colocated with the module it tests (`operations.ts` ↔ `operations.test.ts`, and so on for `analyzer`, `diff`, `exporter`, `history`, `parser`, `search`, `semantic`, `sessionBudget`, `sessionStorage`).
 - **`tests/`** (repository root) and two files directly under **`src/`** (`language.test.ts`, `seo.test.ts`) — tests that span more than one module, exercise a composable's behavior, or check component/CSS/HTML source rather than a single domain function: `useAutoSave.test.ts`, `autoSaveIndicator.test.ts`, `cardLayout.test.ts`, `editorPerformance.test.ts`, `searchHighlight.test.ts`, `theme.test.ts`, `visualIdentity.test.ts`.
 
 Run `npm test` to see the current count of test files and cases — it isn't repeated here as a number, since it changes as the suite grows.

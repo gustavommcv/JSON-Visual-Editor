@@ -29,7 +29,8 @@ src/
 │   ├── history.ts                    Undo/redo snapshot stack with typing-grouping
 │   ├── diff.ts                       Structural comparison (added/removed/changed/reordered)
 │   ├── search.ts                     Recursive key/value/path search
-│   ├── image.ts                      Image-candidate detection (remote URL or data URI)
+│   ├── image.ts                      Legacy image-candidate helpers (kept regression-tested)
+│   ├── semantic.ts                   Pure semantic detector and safe derived metadata
 │   ├── exporter.ts                   Export validation + JSON serialization
 │   ├── sessionStorage.ts             Session (de)serialization, validation, and storage-budget trimming
 │   ├── sessionBudget.ts              Byte-size measurement used by the budget worker
@@ -53,7 +54,9 @@ src/
 │   │   ├── JsonItemDetailsPanel.vue       Side panel for editing one item/row in isolation
 │   │   ├── PathBreadcrumb.vue             Renders the current path as $["a"][0]
 │   │   ├── ConfirmAction.vue              Generic destructive-action confirmation dialog
-│   │   ├── ImagePreview.vue               Renders a detected image candidate
+│   │   ├── SemanticBadge.vue              Compact, optional interpretation control
+│   │   ├── SemanticInspector.vue          Contextual desktop/mobile interpretation panel
+│   │   ├── ImagePreview.vue               Legacy image preview component (not in the active editor path)
 │   │   └── useSearchHighlight.ts          Highlight/scroll/focus behavior for search + comparison navigation
 │   │
 │   ├── search/

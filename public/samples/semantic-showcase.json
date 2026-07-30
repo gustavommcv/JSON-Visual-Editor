@@ -1,0 +1,33 @@
+{
+  "project": "Atlas release review",
+  "publishedOn": "2026-07-30",
+  "lastUpdated": "2026-07-30T15:14:13Z",
+  "buildTimestamp": 1786000000,
+  "repository": "https://github.com/example/atlas",
+  "documentation": "https://example.com/docs/atlas?utm_source=fixture",
+  "supportEmail": "support@example.com",
+  "releaseId": "f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
+  "brand": {
+    "primaryColor": "#4f8a70",
+    "accentColor": "rgb(185, 243, 124)",
+    "logo": "https://images.example.com/atlas.png?token=private",
+    "motionPreview": "https://media.example.com/atlas-loop.gif",
+    "demoVideo": "https://media.example.com/atlas-demo.webm"
+  },
+  "summary": "Atlas is a focused release-review workspace. This deliberately long paragraph demonstrates progressive disclosure without replacing or mutating the source string. Editors can continue typing in the raw field while the contextual inspector provides a calmer reading surface, useful metadata, and copy actions only when requested.",
+  "embeddedConfig": "{\"features\":{\"semanticInspector\":true,\"remoteMediaAutoLoad\":false},\"rollout\":[\"design\",\"quality\",\"release\"]}",
+  "releases": [
+    {
+      "version": "1.4.0",
+      "status": "ready",
+      "releasedAt": "2026-07-30T15:14:13-03:00",
+      "notes": "Keyboard navigation and responsive inspector verified."
+    },
+    {
+      "version": "1.3.0",
+      "status": "stable",
+      "releasedAt": "2026-06-18T10:00:00Z",
+      "notes": "Local session recovery and export flow verified."
+    }
+  ]
+}

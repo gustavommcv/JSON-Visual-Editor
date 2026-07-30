@@ -1,21 +1,23 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import type { JsonPrimitive, JsonRootKind } from '@/core/json/types'
-import ImagePreview from './ImagePreview.vue'
+import type { JsonPath, JsonPrimitive, JsonRootKind } from '@/core/json/types'
+import SemanticBadge, { type SemanticInspectionRequest } from './SemanticBadge.vue'
 
 const props = withDefaults(
   defineProps<{
     value: Exclude<JsonPrimitive, null>
     label: string
-    showImagePreview?: boolean
+    path: JsonPath
+    compact?: boolean
   }>(),
-  { showImagePreview: false },
+  { compact: false },
 )
 
 const emit = defineEmits<{
   setValue: [value: Exclude<JsonPrimitive, null>]
   changeType: [valueType: JsonRootKind]
+  inspectSemantic: [request: SemanticInspectionRequest]
 }>()
 
 const numberError = ref<string | null>(null)
@@ -103,9 +105,11 @@ function onTypeChange(event: Event): void {
       </select>
     </label>
 
-    <ImagePreview
-      v-if="showImagePreview && valueType === 'string'"
-      :value="value as string"
+    <SemanticBadge
+      :value="value"
+      :path="path"
+      :compact="compact"
+      @inspect="emit('inspectSemantic', $event)"
     />
   </div>
 </template>

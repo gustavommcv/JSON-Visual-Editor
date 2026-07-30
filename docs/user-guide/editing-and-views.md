@@ -10,7 +10,7 @@
 - [Arrays: items](#arrays-items)
 - [The table view](#the-table-view)
 - [Item details panel](#item-details-panel)
-- [Image previews](#image-previews)
+- [Content-aware values and inspector](#content-aware-values-and-inspector)
 - [Confirmations](#confirmations)
 - [Undo, redo, and restoring the original](#undo-redo-and-restoring-the-original)
 - [Keyboard shortcuts](#keyboard-shortcuts)
@@ -94,14 +94,19 @@ When an array qualifies for the table view:
 
 Opening a nested value from a table or card ("Open details" / "Open item") shows it in a side panel instead of navigating away from the table. From there you can edit it with the full recursive editor, move it up/down within its array, duplicate it, or delete it, then close the panel to return to the table.
 
-## Image previews
+## Content-aware values and inspector
 
-A string value that looks like an image is shown with a small preview beneath its field:
+Some primitive values gain a quiet badge beneath their normal editor. The badge is an interpretation only: the original text/number field and Type selector remain visible and editable, and detection never changes what Download JSON exports.
 
-- A `http://` or `https://` URL ending in a known image extension (`.png`, `.jpg`/`.jpeg`, `.gif`, `.webp`, `.svg`, `.avif`, `.bmp`, `.ico`, `.apng`) — including URLs with a query string.
-- A `data:image/...` value already embedded in the JSON, up to about one million characters. Embedded SVG data (`data:image/svg+xml`) is deliberately **not** previewed.
+The editor recognizes conservative, content-based forms of:
 
-A remote image preview is loaded lazily and, when it loads, is fetched directly by your browser from wherever the URL points — the application discloses this next to the preview. If the image fails to load, a fallback message is shown and the underlying value is left exactly as it was; a false-positive match (a URL-shaped string that isn't really reachable, or a non-image file with a matching extension) simply fails to load rather than corrupting anything. See [Privacy and local data](privacy-and-local-data.md) for what this means for network requests.
+- ISO dates and date-times, and plausible Unix timestamps (seconds or milliseconds from 2000 through 2100).
+- Safe `http://`/`https://` URLs, direct image/GIF/video links, common Git-host repository URLs, and email addresses.
+- CSS colors (hex, RGB/RGBA, HSL/HSLA), UUIDs, long/multiline text, raster `data:image/...` values, and strings containing a valid JSON object or array up to 20,000 characters.
+
+Activate a badge to open the contextual inspector. On a wide screen it occupies a side column; below 880 px it becomes a bottom sheet. The inspector shows the path, raw JSON type, safe derived properties, copy actions, and a purpose-built preview. Embedded JSON is parsed read-only; long text gets a reading surface; colors get a swatch; and date/timestamp values show useful alternate forms.
+
+Remote media is **not requested when the document opens, the card expands, or the inspector opens**. The inspector shows the host and requires **Load preview** first. Only that action assigns the media URL to an image/video element, at which point the browser contacts the remote host. Embedded raster data is already part of the document and can be shown locally. SVG data images are not previewed. See [Privacy and local data](privacy-and-local-data.md#remote-media-opt-in) for the network and security details.
 
 ## Confirmations
 
@@ -127,6 +132,6 @@ Outside of text fields: `Ctrl+Z` (`Cmd+Z` on macOS) for Undo, `Ctrl+Y` or `Ctrl+
 
 ## Responsive layout
 
-Below **760 px** wide, the table view's `<table>` is replaced by a stacked card layout that keeps the same typed, editable fields — no functionality is lost, only the visual arrangement changes. Deeply nested documents scroll independently of the page, and a wide table scrolls horizontally within its own container rather than the whole page.
+Below **760 px** wide, the table view's `<table>` is replaced by a stacked card layout that keeps the same typed, editable fields — no functionality is lost, only the visual arrangement changes. Below **880 px**, the contextual inspector becomes a bottom sheet. Deeply nested documents scroll independently of the page, and a wide table scrolls horizontally within its own container rather than the whole page.
 
 The interface also supports a light and a dark theme, toggled from the header; your choice is remembered for your next visit (see [Privacy and local data](privacy-and-local-data.md#what-is-stored-and-where)).

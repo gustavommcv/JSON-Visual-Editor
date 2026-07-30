@@ -5,6 +5,7 @@ import { summarizeNestedJsonValue } from '@/core/json/analyzer'
 import type { JsonEditorOperation } from '@/core/json/operations'
 import type { JsonPath, JsonPrimitive, JsonRootKind, JsonValue } from '@/core/json/types'
 import JsonPrimitiveEditor from './JsonPrimitiveEditor.vue'
+import type { SemanticInspectionRequest } from './SemanticBadge.vue'
 
 const props = defineProps<{
   value: JsonValue
@@ -16,6 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   operation: [operation: JsonEditorOperation]
   openDetails: []
+  inspectSemantic: [request: SemanticInspectionRequest]
 }>()
 
 const nestedSummary = computed(() => summarizeNestedJsonValue(props.value))
@@ -75,8 +77,11 @@ function onNullTypeChange(event: Event): void {
       v-else
       :value="primitiveValue"
       :label="label"
+      :path="path"
+      compact
       @set-value="setValue"
       @change-type="changeType"
+      @inspect-semantic="emit('inspectSemantic', $event)"
     />
   </div>
 </template>
