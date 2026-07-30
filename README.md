@@ -97,6 +97,13 @@ Start at [`docs/README.md`](docs/README.md) for the full documentation index (us
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+## Support the project
+
+If JSON Visual Editor is useful to you, the best free way to support it is to star the repository — it helps more people discover the project. If you would also like to support ongoing maintenance, you can buy me a coffee. Both are entirely optional.
+
+[![Star JSON Visual Editor on GitHub](https://img.shields.io/github/stars/gustavommcv/JSON-Visual-Editor?style=flat-square&logo=github&label=Star)](https://github.com/gustavommcv/JSON-Visual-Editor)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-Support-FFDD00?style=flat-square&logo=buymeacoffee&logoColor=000)](https://buymeacoffee.com/gusmonnerat)
+
 ## License
 
 [GPL-3.0](LICENSE).
