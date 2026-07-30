@@ -1,75 +1,41 @@
 # JSON Visual Editor
 
-A generic web application for importing, understanding, editing, comparing, and exporting JSON documents without working directly with JSON syntax. The document is processed entirely in your browser and is automatically saved to local browser storage as you edit, so it can be recovered after an accidental tab close or crash — see [Local auto-save](#local-auto-save) for exactly what that means and does not mean.
+A browser-based application for importing, understanding, editing, comparing, and exporting JSON documents visually — without hand-editing raw JSON syntax.
 
-The final MVP scope and product decisions are documented in [`docs/MVP.md`](docs/MVP.md).
+Point it at any `.json` file and it infers a sensible way to display each part of it (a form for an object, a table or cards for an array), lets you edit values and structure directly, and tracks what changed against the file you started with. There's no backend: everything runs in your browser, and your file is never uploaded — see [Privacy](#privacy-and-local-processing).
 
 ## Features
 
-- import one `.json` file by clicking or dragging and dropping;
-- edit objects, arrays, strings, numbers, booleans, and `null`, including at the root;
-- navigate a recursive editor with breadcrumbs, collapsible structures, and an independently scrolling workspace;
-- use a form for objects, a list for simple arrays, a table for similar objects, and a tree for irregular structures;
-- switch manually between compatible views;
-- create, edit, change type, rename, deeply duplicate, delete, and reorder values;
-- use a table with a stable union of columns, missing cells, nested summaries, and item details;
-- use responsive cards instead of a table on narrow screens;
-- search globally by property, value, or path and navigate to a highlighted result without changing the document;
-- preview likely image values safely within the layout;
-- undo, redo, and restore the original document;
-- compare additions, removals, changes, and array reordering structurally;
-- download formatted two-space JSON or compact JSON;
-- see whether the current document has changes that have not been downloaded;
-- use accessible messages, visible focus, labelled controls, and dialogs with contained and restored focus.
+- Import a `.json` file by clicking or dragging it in; clear English error messages for empty files, invalid JSON, and unsafe/non-finite numbers.
+- Recursive editing of objects, arrays, strings, numbers, booleans, and `null` — including at the document root.
+- A **Form** view for objects and a **Table** view (with a **Cards** alternative) for arrays of similar objects; every other array uses an editable Cards list. The view is inferred from the data's actual shape, never from property names.
+- Create, rename, retype, deeply duplicate, delete, and reorder properties and items, with confirmation before anything destructive.
+- A stable table with a union of columns across items, explicit "missing" cells, nested-value summaries, and a details panel for inspecting one item at a time.
+- Global search across property names, values, and paths, with navigation to a highlighted result.
+- Automatic preview for values that look like image URLs or embedded raster image data.
+- Undo, redo (50 steps each), and one-click restoration of the originally imported document.
+- A structural comparison view (added / removed / changed / reordered) against the original.
+- Download the result as formatted (two-space) or compact JSON.
+- Local auto-save to IndexedDB, with a resumable-session prompt on your next visit — see [Export and recovery](docs/user-guide/export-and-recovery.md) for exactly what that does and doesn't guarantee.
+- A light/dark theme, keyboard shortcuts, and responsive layout (cards instead of a table below 760 px).
 
-## Terminology
+See the [user guide](docs/user-guide/getting-started.md) for a full walkthrough.
 
-Application-owned text follows these terms consistently:
+## Technology
 
-| Concept | Required term |
-|---|---|
-| Imported content | File |
-| JSON being edited | Document |
-| Object member | Property |
-| JSON content at a path | Value |
-| JSON map | Object |
-| Ordered JSON collection | Array |
-| Differences from the original | Changes |
-| Reverse the last operation | Undo |
-| Reapply a reversed operation | Redo |
-| Return to imported content | Restore original |
-| Inspect differences | Compare changes |
-| Save a JSON copy | Download JSON |
-| Find content | Search |
-| Recursive hierarchy | Tree view |
-| Rows and columns | Table view |
+- [Vue 3](https://vuejs.org/) (`<script setup>` SFCs) — the only runtime dependency.
+- [Vite 7](https://vite.dev/) for the dev server and production build.
+- [TypeScript](https://www.typescriptlang.org/) in strict mode throughout.
+- [Vitest](https://vitest.dev/) for the test suite.
+- [ESLint](https://eslint.org/) (flat config, with `typescript-eslint` and `eslint-plugin-vue`).
 
-Names and strings inside a user's JSON are data, not interface terminology, and are never translated.
-
-## Privacy
-
-Your file is not sent to a server, database, or analytics service. Importing, editing, history, search, comparison, export, and auto-save all happen in your browser, using its local storage only — nothing leaves the device.
-
-The only possible external traffic is an optional preview of a remote image URL already present in the JSON. In that case, the browser requests the image directly from its host; the JSON document is not sent. The application does not proxy, upload, or automatically download images.
-
-## Local auto-save
-
-The application persists your editing session to the browser's IndexedDB as you work, so it can be recovered after an accidental tab close, reload, or crash. This is a local safety net, not a save button, a sync service, or a substitute for **Download JSON** — it is the only way to get a file back out of the browser onto disk.
-
-- **What is saved:** the original imported document, the current edited document, the last-exported snapshot (if any), and a capped slice of the undo/redo history (up to 20 entries per side, and an approximate 8 MB budget per session — the in-editor undo/redo limit of 50 steps is unaffected; only what gets persisted is trimmed, oldest-from-present first).
-- **When it saves:** immediately after each edit that is actually committed to the undo stack — there is no artificial delay. A burst of rapid changes never runs more than one write at a time for the same document; if more edits arrive while a write is in progress, they are coalesced so the very next write always reflects the latest state, not an intermediate one. The tab becoming hidden or being unloaded also nudges a save attempt, but this is best-effort reinforcement, not the primary mechanism — like any unload-time work in a browser, it is not guaranteed to complete if the process is closed abruptly (killed, powered off, or crashed) rather than closed normally.
-- **What is *not* saved:** a freshly imported file that has not been edited yet does not create a recoverable session.
-- **Restoring a session:** on startup, before you can start a new import, the application checks local storage; if one or more recoverable sessions exist, it offers each one by filename, last-saved time, and size, letting you resume or discard each individually (never picking "the most recent" for you automatically) or dismiss the prompt for this visit without discarding anything.
-- **Retention:** up to 5 recoverable sessions are kept, for up to 7 days each. A session with a current tab lease is never evicted; that can temporarily put the total above 5 until the tab closes or its lease expires. Records written by a newer app schema remain quarantined until you explicitly discard them and do not count toward the five recoverable sessions.
-- **Cleanup:** restoring the original document, successfully downloading it, removing the file, or choosing Discard removes all stored JSON for that session. IndexedDB keeps a minimal deletion marker containing only a random session ID, revision, owner-tab ID, and deletion time; it contains no filename or document content and prevents an older or suspended tab from recreating the deleted session. Editing again after Restore or Download starts a new session identity.
-- **Multiple documents and tabs:** each imported or resumed document gets its own independent session, identified internally and never merely by filename — two files named the same are not mixed up. Changes from two tabs are not merged. Atomic revision checks let one concurrent write win and pause auto-save in the losing tab. Revisioned deletion markers also prevent an old tab from recreating a session another tab deleted.
-- **When it is unavailable:** if IndexedDB cannot be used at all (for example, some private-browsing modes), a visible notice explains that editing still works but is only retained in the current tab. Other storage failures are also reported with a specific message; a temporary failure is retried on the next edit, while a full quota stops further attempts for that session until reload.
+No state-management library, no UI/table/component kit, and no CSS framework — see [Architecture overview](docs/architecture/overview.md) for the reasoning.
 
 ## Requirements
 
-- Node.js 20.19+ or 22.12+;
-- npm, included with standard Node.js distributions;
-- a modern browser with support for `File`, `Blob`, `URL.createObjectURL`, and JavaScript modules.
+- Node.js `^20.19.0` or `>=22.12.0` (required by Vite 7).
+- npm (bundled with Node.js).
+- A modern browser with `File`, `Blob`, `URL.createObjectURL`, and JavaScript module support to *use* the built application.
 
 ## Installation
 
@@ -83,145 +49,54 @@ npm install
 npm run dev
 ```
 
-Vite prints the local address. The application has no backend and requires no environment variables.
+Vite prints the local address to open. There's no backend and no environment variables to configure.
 
-## Tests and checks
+## Checks and tests
 
 ```bash
-npm test
-npm run typecheck
-npm run lint
+npm test           # Vitest suite
+npm run typecheck  # vue-tsc, strict mode
+npm run lint       # ESLint, zero warnings allowed
 ```
 
-- `npm test` runs the Vitest suite;
-- `npm run typecheck` checks Vue and TypeScript in strict mode;
-- `npm run lint` runs ESLint without allowing warnings.
+See [Testing](docs/development/testing.md) for how the suite is organized and [Code quality](docs/development/code-quality.md) for what the type checker and linter enforce.
 
 ## Build
 
 ```bash
-npm run build
+npm run build    # runs typecheck, then builds dist/
+npm run preview  # serves the built output locally
 ```
 
-The command runs the type check and generates static files in `dist/`. To inspect the production output locally:
+## Architecture, in brief
 
-```bash
-npm run preview
-```
+- `src/core/json/` — the JSON domain layer (parsing, operations, history, diff, search, export, session serialization). Plain TypeScript, no Vue dependency.
+- `src/composables/` — reactive state built on that domain layer: the loaded document and its history, local auto-save, theme, dialog focus.
+- `src/features/` and `src/components/` — the UI, receiving data as props and emitting typed operations rather than mutating the document directly.
 
-## GitHub Pages deployment
+Full details, a component map, and the data flow are in [Architecture overview](docs/architecture/overview.md) and [Editor model](docs/architecture/editor-model.md).
 
-The repository includes `.github/workflows/deploy-pages.yml`. Every push to `main` installs dependencies, builds the application, and publishes only the generated `dist/` directory.
+## Privacy and local processing
 
-In the GitHub repository, open **Settings → Pages** and set **Source** to **GitHub Actions**. The project is then available at:
-
-```text
-https://gustavommcv.github.io/JSON-Visual-Editor/
-```
-
-The Vite `base` is configured for the `/JSON-Visual-Editor/` project path. If the site later moves to a custom domain or to the root repository `gustavommcv.github.io`, change `base` back to `/`.
-
-## Dependencies
-
-- `vue`: the only runtime dependency, used for components and reactive interface state;
-- `vite` and `@vitejs/plugin-vue`: development server and production bundling;
-- `typescript` and `vue-tsc`: strict typing for the domain and components;
-- `vitest`: unit tests for JSON rules;
-- `eslint`, `typescript-eslint`, `eslint-plugin-vue`, and `vue-eslint-parser`: static analysis.
-
-There is no state-management, table, upload, JSON-manipulation, or CSS library. The MVP uses Vue and native browser APIs.
-
-## Supported formats
-
-- input: one file with the `.json` extension at a time;
-- roots: object, array, string, number, boolean, or `null`;
-- output: JSON formatted with two spaces or compact JSON;
-- possible images: HTTP or HTTPS URLs whose path ends in a known image extension, including URLs with query strings, and raster `data:image` values within the documented limit.
-
-Embedded SVG `data:image` values are not loaded. A valid URL without a known image extension is not previewed automatically.
-
-## Automatic view inference
-
-The initial view depends only on the actual type and structure of the data:
-
-| Structure | Initial view |
-|---|---|
-| Object | Form |
-| Array of primitive values | Editable list |
-| Array containing only objects, with at most 16 combined columns and at least 50% of those columns in every row | Table |
-| Mixed, nested, or highly irregular array | Tree |
-| Primitive root value | Editor for that value type |
-| `null` | Explicit replacement-type picker |
-
-Table columns follow the first appearance of each property. Names such as `title`, `image`, `category`, or `id` do not affect inference.
-
-## Security and data-integrity decisions
-
-- JSON paths are arrays of `string | number` segments, so dots, spaces, slashes, accents, and symbols remain literal;
-- every change passes through `src/core/json/operations.ts` and produces a new root;
-- renaming and creation reject duplicate property names;
-- duplication uses a deep copy;
-- arrays preserve exact order; object order is only a predictable presentation and has no semantic meaning;
-- unsafe integers and non-finite numbers are rejected;
-- type changes, root replacement, relevant deletions, and restoration require confirmation;
-- document-provided HTML is never rendered;
-- remote images use `referrerpolicy="no-referrer"`, links use `noopener noreferrer`, loading is lazy, and dimensions are constrained;
-- export validates the current state again and serializes only the current JSON value;
-- search and image heuristics never transform URLs, property names, strings, or value types;
-- object URLs created for downloads are revoked after use;
-- application language never changes imported filenames or JSON content.
-
-## History and comparison
-
-History uses immutable snapshots, with up to 50 previous states and 50 redo states. Consecutive typing in the same field within 750 ms is grouped into one step. `Ctrl+Z`/`Cmd+Z`, `Ctrl+Y`, and `Cmd+Shift+Z` work outside form fields; inside a field, the browser keeps its native text undo behavior.
-
-Comparison walks the document structurally. Object property order is ignored, while array order is significant. A change that keeps exactly the same array elements in a different sequence is reported as a reorder.
-
-## Architecture summary
-
-- the JSON domain is independent of Vue;
-- components emit typed operations and do not mutate the document directly;
-- the document composable coordinates import, history, comparison, downloaded state, and export;
-- a separate composable owns local auto-save (persistence timing, session identity, retention, and multi-tab conflict detection) and wraps just the document-composable actions it needs to react to (restore, download);
-- search, selection, focus, and panel state stay only in the interface;
-- shared CSS controls responsive layout, table containment, focus, contrast, and reduced motion.
-
-## Folder structure
-
-```text
-src/
-├── composables/          # document state, local auto-save, and reusable focus management
-├── core/json/            # parser, analysis, operations, history, comparison, search, export, and session serialization
-├── features/
-│   ├── comparison/       # structural changes panel
-│   ├── editor/           # recursive editor, table, types, images, and dialogs
-│   ├── export/           # download configuration and browser download
-│   ├── import/           # file drop zone, imported-file summary, and the resume-session prompt
-│   └── search/           # global search and results
-├── styles/               # responsive and accessible visual system
-├── App.vue
-└── main.ts
-docs/
-└── MVP.md                # scope, decisions, and final requirement status
-```
+There is no backend and no analytics. Importing, editing, history, search, comparison, export, and local auto-save all happen in your browser. The one exception: if your JSON contains what looks like a remote image URL, your browser requests that image directly from its host to show a preview — your JSON document itself is never sent anywhere. See [Privacy and local data](docs/user-guide/privacy-and-local-data.md) for the full picture, including exactly what's stored locally and for how long.
 
 ## Known limitations
 
-- one document can be open at a time;
-- local auto-save (see above) is a crash-recovery net, not a sync or backup service — it stays on one browser profile on one device; a save starts immediately on each edit, but cannot guarantee recovery of an edit whose write was still in progress at the exact moment of an abrupt process kill (killed, powered off, or crashed) — no web app can guarantee that;
-- very large documents are not virtualized or processed in a worker;
-- large documents can still make snapshot history use significant memory, although history is limited;
-- decimals follow JavaScript IEEE 754 precision;
-- image detection can produce a false positive or a remote loading failure;
-- comparison reports reordering only when the array keeps the same multiset of values;
-- there is no cross-device synchronization or real-time collaboration.
+- One document open at a time (open a second browser tab for a second document).
+- Very large documents aren't virtualized, and JSON parsing/rendering run on the main thread.
+- Numbers follow JavaScript's safe-integer/finite-number rules; there's no arbitrary-precision support.
+- Local auto-save is a crash-recovery net, not a guarantee or a substitute for downloading your file.
 
-## Future work outside the MVP
+The full, evidence-based list — including a known UI-state quirk in the Cards/list view after reordering — is in [Limitations](docs/limitations.md).
 
-- optional JSON Schema support;
-- virtualization and workers for very large files;
-- an explicit arbitrary-precision number policy;
-- editing multiple files at once;
-- backend services, accounts, cloud storage, and collaboration;
-- external integrations and automatic publishing;
-- a localization framework and language selector if additional languages are introduced.
+## Documentation
+
+Start at [`docs/README.md`](docs/README.md) for the full documentation index (user guide, architecture, development, accessibility, deployment).
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## License
+
+[GPL-3.0](LICENSE).
