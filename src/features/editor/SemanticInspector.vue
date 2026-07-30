@@ -5,11 +5,15 @@ import { formatJsonPath } from '@/core/json/path'
 import type { JsonSemanticValue } from '@/core/json/semantic'
 import type { JsonPath, JsonPrimitive } from '@/core/json/types'
 
-const props = defineProps<{
-  semantic: JsonSemanticValue
-  rawValue: JsonPrimitive
-  path: JsonPath
-}>()
+const props = withDefaults(
+  defineProps<{
+    semantic: JsonSemanticValue
+    rawValue: JsonPrimitive
+    path: JsonPath
+    embedded?: boolean
+  }>(),
+  { embedded: false },
+)
 
 const emit = defineEmits<{ close: [] }>()
 const mediaRequested = ref(false)
@@ -80,6 +84,7 @@ function updateCompactViewport(event: MediaQueryListEvent | MediaQueryList): voi
 }
 
 onMounted(() => {
+  if (props.embedded) return
   window.addEventListener('keydown', onKeydown)
   compactViewportQuery = window.matchMedia('(max-width: 880px)')
   updateCompactViewport(compactViewportQuery)
@@ -87,22 +92,26 @@ onMounted(() => {
   void nextTick(() => closeButton.value?.focus())
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKeydown)
-  compactViewportQuery?.removeEventListener('change', updateCompactViewport)
+  if (!props.embedded) {
+    window.removeEventListener('keydown', onKeydown)
+    compactViewportQuery?.removeEventListener('change', updateCompactViewport)
+  }
   if (copyTimer) clearTimeout(copyTimer)
 })
 </script>
 
 <template>
-  <div class="inspector-backdrop" aria-hidden="true" @click="emit('close')"></div>
-  <aside
+  <div v-if="!embedded" class="inspector-backdrop" aria-hidden="true" @click="emit('close')"></div>
+  <component
+    :is="embedded ? 'div' : 'aside'"
     ref="inspector"
     class="semantic-inspector"
-    :role="isCompactViewport ? 'dialog' : 'complementary'"
-    :aria-modal="isCompactViewport ? 'true' : undefined"
-    aria-labelledby="semantic-inspector-title"
+    :class="{ 'semantic-inspector--embedded': embedded }"
+    :role="embedded ? undefined : (isCompactViewport ? 'dialog' : 'complementary')"
+    :aria-modal="!embedded && isCompactViewport ? 'true' : undefined"
+    :aria-labelledby="embedded ? undefined : 'semantic-inspector-title'"
   >
-    <header class="semantic-inspector__header">
+    <header v-if="!embedded" class="semantic-inspector__header">
       <div>
         <p class="eyebrow">Contextual inspector</p>
         <h2 id="semantic-inspector-title">{{ semantic.label }}</h2>
@@ -198,5 +207,5 @@ onBeforeUnmount(() => {
       </div>
       <p v-if="copyState" class="copy-status" role="status">{{ copyState }}</p>
     </div>
-  </aside>
+  </component>
 </template>

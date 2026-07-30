@@ -3,13 +3,7 @@ import { computed } from 'vue'
 
 import { detectJsonSemanticValue, type JsonSemanticValue } from '@/core/json/semantic'
 import type { JsonPath, JsonPrimitive } from '@/core/json/types'
-
-export interface SemanticInspectionRequest {
-  semantic: JsonSemanticValue
-  rawValue: JsonPrimitive
-  path: JsonPath
-  trigger: HTMLElement
-}
+import type { SemanticInspectionRequest } from './contextualSurface'
 
 const props = withDefaults(
   defineProps<{

@@ -10,6 +10,8 @@ describe('contextual semantic inspector', () => {
   const primitiveEditor = readSource('../src/features/editor/JsonPrimitiveEditor.vue')
   const inspector = readSource('../src/features/editor/SemanticInspector.vue')
   const documentEditor = readSource('../src/features/editor/JsonDocumentEditor.vue')
+  const valueEditor = readSource('../src/features/editor/JsonValueEditor.vue')
+  const detailsPanel = readSource('../src/features/editor/JsonItemDetailsPanel.vue')
   const css = readSource('../src/styles/base.css')
 
   it('keeps the raw typed editor authoritative and adds interpretation separately', () => {
@@ -40,8 +42,29 @@ describe('contextual semantic inspector', () => {
     expect(css).toContain('@media (max-width: 880px)')
     expect(css).toContain('max-height: min(82dvh, 760px);')
     expect(css).toContain('.inspector-backdrop')
-    expect(inspector).toContain(":role=\"isCompactViewport ? 'dialog' : 'complementary'\"")
+    expect(inspector).toContain(":role=\"embedded ? undefined : (isCompactViewport ? 'dialog' : 'complementary')\"")
     expect(inspector).toContain("event.key !== 'Tab' || !isCompactViewport.value")
+  })
+
+  it('reuses item details as one contextual surface for nested inspection', () => {
+    expect(valueEditor).toContain('@inspect-semantic="inspectFromItemDetails"')
+    expect(valueEditor).toContain('<SemanticInspector')
+    expect(valueEditor).toContain('embedded')
+    expect(valueEditor).toContain('@back="returnToItemDetails"')
+    expect(inspector).toContain("if (props.embedded) return")
+    expect(inspector).toContain("'semantic-inspector--embedded': embedded")
+    expect(css).toContain('.semantic-inspector--embedded')
+    expect(valueEditor).toContain("emit('contextualSurfaceOpen')")
+    expect(documentEditor).toContain('@contextual-surface-open="prepareContextualSurface"')
+    expect(documentEditor).toContain('semanticSelection.value = null')
+  })
+
+  it('provides hierarchical Escape, close and focus behavior inside item details', () => {
+    expect(detailsPanel).toContain('@keydown.esc.stop="dismissCurrentView"')
+    expect(detailsPanel).toContain("if (props.inspectionTitle) emit('back')")
+    expect(detailsPanel).toContain('← Back to item details')
+    expect(detailsPanel).toContain("backButton.value?.focus()")
+    expect(valueEditor).toContain("if (trigger?.isConnected) trigger.focus()")
   })
 
   it('ships a coherent fixture covering the semantic renderer set', () => {

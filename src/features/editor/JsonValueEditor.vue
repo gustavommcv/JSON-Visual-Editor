@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 
 import {
   analyzeArrayShape,
@@ -27,11 +27,21 @@ import type {
   JsonValue,
 } from '@/core/json/types'
 import ConfirmAction from './ConfirmAction.vue'
+import {
+  closeItemDetailsSurface,
+  getItemDetailsIndex,
+  getItemDetailsInspection,
+  inspectItemDetailsSurface,
+  openItemDetailsSurface,
+  returnToItemDetails as returnToItemDetailsState,
+  type ItemDetailsSurfaceState,
+  type SemanticInspectionRequest,
+} from './contextualSurface'
 import JsonItemDetailsPanel from './JsonItemDetailsPanel.vue'
 import JsonPrimitiveEditor from './JsonPrimitiveEditor.vue'
 import JsonTableCell from './JsonTableCell.vue'
 import JsonTypePicker from './JsonTypePicker.vue'
-import type { SemanticInspectionRequest } from './SemanticBadge.vue'
+import SemanticInspector from './SemanticInspector.vue'
 
 defineOptions({ name: 'JsonValueEditor' })
 
@@ -52,6 +62,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   operation: [operation: JsonEditorOperation]
   inspectSemantic: [request: SemanticInspectionRequest]
+  contextualSurfaceOpen: []
 }>()
 
 interface PendingConfirmation {
@@ -69,7 +80,7 @@ const newPropertyType = ref<JsonRootKind>('string')
 const missingCell = ref<string | null>(null)
 const expanded = ref(props.depth < 2)
 const bodyMounted = ref(props.depth < 2)
-const selectedItemIndex = ref<number | null>(null)
+const itemDetailsSurface = shallowRef<ItemDetailsSurfaceState>(closeItemDetailsSurface())
 const pendingConfirmation = shallowRef<PendingConfirmation | null>(null)
 
 const valueKind = computed(() => getRootKind(props.value))
@@ -95,6 +106,8 @@ const pathData = computed(() => JSON.stringify(props.path))
 const itemCount = computed(() =>
   arrayValue.value ? arrayValue.value.length : objectEntries.value.length,
 )
+const selectedItemIndex = computed(() => getItemDetailsIndex(itemDetailsSurface.value))
+const itemDetailsInspection = computed(() => getItemDetailsInspection(itemDetailsSurface.value))
 const selectedItem = computed<JsonObject | null>(() => {
   if (selectedItemIndex.value === null || !arrayValue.value) return null
   const item = arrayValue.value[selectedItemIndex.value]
@@ -120,7 +133,7 @@ watch(
 )
 
 watch(valueKind, () => {
-  selectedItemIndex.value = null
+  closeItemDetails()
   if (isCollection.value) {
     viewMode.value = getDefaultCollectionView(props.value as JsonObject | JsonValue[])
   }
@@ -133,7 +146,7 @@ watch(
       selectedItemIndex.value !== null &&
       (length === undefined || selectedItemIndex.value >= length)
     ) {
-      selectedItemIndex.value = null
+      closeItemDetails()
     }
   },
 )
@@ -153,7 +166,7 @@ watch(
       const rowIndex = targetPath[props.path.length]
       const row = typeof rowIndex === 'number' ? arrayValue.value[rowIndex] : undefined
       if (typeof rowIndex === 'number' && row !== undefined && isJsonObject(row)) {
-        selectedItemIndex.value = rowIndex
+        openItemDetails(rowIndex)
       }
     }
   },
@@ -184,6 +197,27 @@ function forwardOperation(operation: JsonEditorOperation): void {
 
 function forwardSemanticInspection(request: SemanticInspectionRequest): void {
   emit('inspectSemantic', request)
+}
+
+function openItemDetails(itemIndex: number): void {
+  emit('contextualSurfaceOpen')
+  itemDetailsSurface.value = openItemDetailsSurface(itemIndex)
+}
+
+function closeItemDetails(): void {
+  itemDetailsSurface.value = closeItemDetailsSurface()
+}
+
+function inspectFromItemDetails(request: SemanticInspectionRequest): void {
+  itemDetailsSurface.value = inspectItemDetailsSurface(itemDetailsSurface.value, request)
+}
+
+function returnToItemDetails(): void {
+  const trigger = itemDetailsInspection.value?.trigger ?? null
+  itemDetailsSurface.value = returnToItemDetailsState(itemDetailsSurface.value)
+  void nextTick(() => {
+    if (trigger?.isConnected) trigger.focus()
+  })
 }
 
 function setValue(value: JsonValue): void {
@@ -266,7 +300,7 @@ function moveProperty(key: string, toIndex: number): void {
 }
 
 function moveArrayItem(fromIndex: number, toIndex: number): void {
-  selectedItemIndex.value = null
+  closeItemDetails()
   emit('operation', { kind: 'move-array-item', arrayPath: props.path, fromIndex, toIndex })
 }
 
@@ -283,7 +317,7 @@ function requestRemove(path: JsonPath, description: string): void {
 function confirmPendingOperation(): void {
   if (!pendingConfirmation.value) return
   const operation = pendingConfirmation.value.operation
-  if (operation.kind === 'remove-value') selectedItemIndex.value = null
+  if (operation.kind === 'remove-value') closeItemDetails()
   emit('operation', operation)
   pendingConfirmation.value = null
 }
@@ -510,6 +544,7 @@ function viewLabel(view: JsonCollectionView): string {
                 :image-previews="imagePreviews"
                 @operation="forwardOperation"
                 @inspect-semantic="forwardSemanticInspection"
+                @contextual-surface-open="emit('contextualSurfaceOpen')"
               />
             </section>
           </div>
@@ -591,7 +626,7 @@ function viewLabel(view: JsonCollectionView): string {
                         :label="`Item ${rowIndex + 1}, ${column}`"
                         :highlighted="isPathHighlighted([...childPath(rowIndex), column])"
                         @operation="handleTableCellOperation($event, row[column] as JsonValue)"
-                        @open-details="selectedItemIndex = rowIndex"
+                        @open-details="openItemDetails(rowIndex)"
                         @inspect-semantic="forwardSemanticInspection"
                       />
                       <div v-else class="missing-cell">
@@ -619,7 +654,7 @@ function viewLabel(view: JsonCollectionView): string {
                         <button class="icon-button" type="button" :disabled="rowIndex === 0" :aria-label="`Move item ${rowIndex + 1} up`" title="Move up" @click="moveArrayItem(rowIndex, rowIndex - 1)">↑</button>
                         <button class="icon-button" type="button" :disabled="rowIndex === arrayValue.length - 1" :aria-label="`Move item ${rowIndex + 1} down`" title="Move down" @click="moveArrayItem(rowIndex, rowIndex + 1)">↓</button>
                         <button class="icon-button" type="button" :aria-label="`Duplicate item ${rowIndex + 1}`" title="Duplicate item" @click="duplicateArrayItem(rowIndex)">⧉</button>
-                        <button class="icon-button" type="button" :aria-label="`Open details for item ${rowIndex + 1}`" title="Open details" @click="selectedItemIndex = rowIndex">…</button>
+                        <button class="icon-button" type="button" :aria-label="`Open details for item ${rowIndex + 1}`" title="Open details" @click="openItemDetails(rowIndex)">…</button>
                         <button class="icon-button" type="button" :aria-label="`Delete item ${rowIndex + 1}`" title="Delete item" @click="requestRemove(childPath(rowIndex), `Item ${rowIndex + 1} and all of its content will be deleted.`)">×</button>
                       </div>
                     </td>
@@ -651,7 +686,7 @@ function viewLabel(view: JsonCollectionView): string {
                     class="mini-button"
                     type="button"
                     :aria-label="`Open details for item ${rowIndex + 1}`"
-                    @click="selectedItemIndex = rowIndex"
+                    @click="openItemDetails(rowIndex)"
                   >
                     Open details
                   </button>
@@ -666,7 +701,7 @@ function viewLabel(view: JsonCollectionView): string {
                         :label="`Item ${rowIndex + 1}, ${column}`"
                         :highlighted="isPathHighlighted([...childPath(rowIndex), column])"
                         @operation="handleTableCellOperation($event, row[column] as JsonValue)"
-                        @open-details="selectedItemIndex = rowIndex"
+                        @open-details="openItemDetails(rowIndex)"
                         @inspect-semantic="forwardSemanticInspection"
                       />
                     </dd>
@@ -747,6 +782,7 @@ function viewLabel(view: JsonCollectionView): string {
                 :image-previews="imagePreviews"
                 @operation="forwardOperation"
                 @inspect-semantic="forwardSemanticInspection"
+                @contextual-surface-open="emit('contextualSurfaceOpen')"
               />
             </li>
           </ol>
@@ -775,22 +811,35 @@ function viewLabel(view: JsonCollectionView): string {
       v-if="selectedItem && selectedItemIndex !== null"
       :item-number="selectedItemIndex + 1"
       :path="childPath(selectedItemIndex)"
-      @close="selectedItemIndex = null"
+      :inspection-title="itemDetailsInspection?.semantic.label ?? null"
+      :inspection-path="itemDetailsInspection?.path ?? null"
+      @back="returnToItemDetails"
+      @close="closeItemDetails"
     >
-      <div class="detail-panel-actions">
-        <button class="mini-button" type="button" :disabled="selectedItemIndex === 0" @click="moveArrayItem(selectedItemIndex, selectedItemIndex - 1)">↑ Move up</button>
-        <button class="mini-button" type="button" :disabled="selectedItemIndex === (arrayValue?.length ?? 0) - 1" @click="moveArrayItem(selectedItemIndex, selectedItemIndex + 1)">↓ Move down</button>
-        <button class="mini-button" type="button" @click="duplicateArrayItem(selectedItemIndex)">⧉ Duplicate</button>
-        <button class="mini-button mini-button--danger" type="button" @click="requestRemove(childPath(selectedItemIndex), `Item ${selectedItemIndex + 1} and all of its content will be deleted.`)">Delete</button>
+      <div v-show="!itemDetailsInspection">
+        <div class="detail-panel-actions">
+          <button class="mini-button" type="button" :disabled="selectedItemIndex === 0" @click="moveArrayItem(selectedItemIndex, selectedItemIndex - 1)">↑ Move up</button>
+          <button class="mini-button" type="button" :disabled="selectedItemIndex === (arrayValue?.length ?? 0) - 1" @click="moveArrayItem(selectedItemIndex, selectedItemIndex + 1)">↓ Move down</button>
+          <button class="mini-button" type="button" @click="duplicateArrayItem(selectedItemIndex)">⧉ Duplicate</button>
+          <button class="mini-button mini-button--danger" type="button" @click="requestRemove(childPath(selectedItemIndex), `Item ${selectedItemIndex + 1} and all of its content will be deleted.`)">Delete</button>
+        </div>
+        <JsonValueEditor
+          :value="selectedItem"
+          :path="childPath(selectedItemIndex)"
+          :depth="1"
+          :highlighted-path="highlightedPath"
+          :image-previews="true"
+          @operation="forwardOperation"
+          @inspect-semantic="inspectFromItemDetails"
+          @contextual-surface-open="emit('contextualSurfaceOpen')"
+        />
       </div>
-      <JsonValueEditor
-        :value="selectedItem"
-        :path="childPath(selectedItemIndex)"
-        :depth="1"
-        :highlighted-path="highlightedPath"
-        :image-previews="true"
-        @operation="forwardOperation"
-        @inspect-semantic="forwardSemanticInspection"
+      <SemanticInspector
+        v-if="itemDetailsInspection"
+        embedded
+        :semantic="itemDetailsInspection.semantic"
+        :raw-value="itemDetailsInspection.rawValue"
+        :path="itemDetailsInspection.path"
       />
     </JsonItemDetailsPanel>
 

@@ -16,7 +16,7 @@ import ConfirmAction from './ConfirmAction.vue'
 import JsonValueEditor from './JsonValueEditor.vue'
 import PathBreadcrumb from './PathBreadcrumb.vue'
 import SemanticInspector from './SemanticInspector.vue'
-import type { SemanticInspectionRequest } from './SemanticBadge.vue'
+import type { SemanticInspectionRequest } from './contextualSurface'
 import { useSearchHighlight } from './useSearchHighlight'
 
 const props = defineProps<{
@@ -104,6 +104,11 @@ function closeSemanticInspector(): void {
   void nextTick(() => {
     if (trigger?.isConnected) trigger.focus()
   })
+}
+
+function prepareContextualSurface(): void {
+  semanticSelection.value = null
+  semanticTrigger = null
 }
 
 function handleOperation(operation: JsonEditorOperation): void {
@@ -248,6 +253,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleHistoryShortcu
             :image-previews="true"
             @operation="handleOperation"
             @inspect-semantic="inspectSemantic"
+            @contextual-surface-open="prepareContextualSurface"
           />
         </div>
         <SemanticInspector

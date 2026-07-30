@@ -5,7 +5,7 @@ import { summarizeNestedJsonValue } from '@/core/json/analyzer'
 import type { JsonEditorOperation } from '@/core/json/operations'
 import type { JsonPath, JsonPrimitive, JsonRootKind, JsonValue } from '@/core/json/types'
 import JsonPrimitiveEditor from './JsonPrimitiveEditor.vue'
-import type { SemanticInspectionRequest } from './SemanticBadge.vue'
+import type { SemanticInspectionRequest } from './contextualSurface'
 
 const props = defineProps<{
   value: JsonValue

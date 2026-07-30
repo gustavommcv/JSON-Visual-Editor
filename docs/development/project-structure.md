@@ -56,6 +56,7 @@ src/
 │   │   ├── ConfirmAction.vue              Generic destructive-action confirmation dialog
 │   │   ├── SemanticBadge.vue              Compact, optional interpretation control
 │   │   ├── SemanticInspector.vue          Contextual desktop/mobile interpretation panel
+│   │   ├── contextualSurface.ts            Pure Item Details → inspector navigation state
 │   │   ├── ImagePreview.vue               Legacy image preview component (not in the active editor path)
 │   │   └── useSearchHighlight.ts          Highlight/scroll/focus behavior for search + comparison navigation
 │   │

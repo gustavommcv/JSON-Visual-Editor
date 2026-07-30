@@ -2935,6 +2935,10 @@ h1 em {
   }
 }
 
+.details-panel__back {
+  margin-bottom: 14px;
+}
+
 /* Product workspace refresh: keep document identity and primary actions in one
    compact band, then let the data—not nested decoration—carry the hierarchy. */
 .document-card--editor {
@@ -3158,6 +3162,16 @@ h1 em {
   gap: 14px;
 }
 
+.semantic-inspector--embedded {
+  max-height: none;
+  overflow: visible;
+  background: transparent;
+}
+
+.semantic-inspector--embedded .semantic-inspector__body {
+  padding: 0;
+}
+
 .inspector-section {
   min-width: 0;
   padding-top: 14px;
@@ -3354,6 +3368,14 @@ h1 em {
     max-height: min(82dvh, 760px);
     border-radius: 18px 18px 0 0;
     box-shadow: var(--shadow-details-panel);
+  }
+
+  .semantic-inspector--embedded {
+    position: static;
+    width: 100%;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .inspector-backdrop {

@@ -7,7 +7,7 @@ This page describes accessibility features actually implemented in the codebase.
 - The import drop zone is a `role="button"` with `tabindex="0"` and explicit `Enter`/`Space` handlers, so it's fully operable without a mouse, not just clickable.
 - Undo (`Ctrl+Z`/`Cmd+Z`) and redo (`Ctrl+Y` or `Ctrl/Cmd+Shift+Z`) work anywhere outside a text field; inside `input`, `textarea`, `select`, or a `contenteditable` element, the shortcuts are deliberately not intercepted, so the browser's native per-field text undo still works.
 - Every dialog and side panel (confirmation, item details, comparison, export, resume-session) closes on `Escape`, except the resume-session prompt — see [Modals and dialogs](#modals-and-dialogs) for why that one is intentionally different.
-- Every semantic badge is a real button with a contextual accessible name. Its inspector closes with `Escape` or its named close control, initially focuses that control, and returns focus to the exact badge that opened it.
+- Every semantic badge is a real button with a contextual accessible name. A directly opened inspector closes with `Escape` or its named close control and returns focus to the exact badge that opened it. Inside Item Details, the inspector is the next view in the same dialog: focus moves to **Back to item details**, and Back, Close, or the first `Escape` returns focus to its badge; a second `Escape` closes Item Details and restores the table/card opener.
 
 ## Focus management
 
@@ -47,4 +47,4 @@ The table view uses a real `<table>` with `scope="col"`/`scope="row"` and a visu
 
 ## Responsive behavior
 
-Below 760 px, the table view switches to a stacked card layout using the same semantic form controls (see [Editing and views](user-guide/editing-and-views.md#responsive-layout)) rather than shrinking the table itself. Below 880 px, the contextual inspector becomes a scrollable bottom sheet with a backdrop and an always-visible close control. These adaptations preserve target sizes and label associations instead of relying on horizontal scrolling or zooming.
+Below 760 px, the table view switches to a stacked card layout using the same semantic form controls (see [Editing and views](user-guide/editing-and-views.md#responsive-layout)) rather than shrinking the table itself. Below 880 px, a directly opened contextual inspector becomes a scrollable bottom sheet with a backdrop and an always-visible close control. Inspection started from Item Details stays inside that dialog, avoiding stacked mobile sheets. These adaptations preserve target sizes and label associations instead of relying on horizontal scrolling or zooming.

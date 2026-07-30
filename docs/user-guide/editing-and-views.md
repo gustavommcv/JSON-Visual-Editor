@@ -94,6 +94,8 @@ When an array qualifies for the table view:
 
 Opening a nested value from a table or card ("Open details" / "Open item") shows it in a side panel instead of navigating away from the table. From there you can edit it with the full recursive editor, move it up/down within its array, duplicate it, or delete it, then close the panel to return to the table.
 
+If you activate a content-aware badge from Item Details, the inspector replaces the details content in that same panel. **Back to item details**, the inspector close button, or the first press of `Escape` returns to the same item and field. Closing Item Details, or pressing `Escape` again, returns to the table. This is UI navigation only: it does not add an editor-history step or change the JSON.
+
 ## Content-aware values and inspector
 
 Some primitive values gain a quiet badge beneath their normal editor. The badge is an interpretation only: the original text/number field and Type selector remain visible and editable, and detection never changes what Download JSON exports.
@@ -104,7 +106,7 @@ The editor recognizes conservative, content-based forms of:
 - Safe `http://`/`https://` URLs, direct image/GIF/video links, common Git-host repository URLs, and email addresses.
 - CSS colors (hex, RGB/RGBA, HSL/HSLA), UUIDs, long/multiline text, raster `data:image/...` values, and strings containing a valid JSON object or array up to 20,000 characters.
 
-Activate a badge to open the contextual inspector. On a wide screen it occupies a side column; below 880 px it becomes a bottom sheet. The inspector shows the path, raw JSON type, safe derived properties, copy actions, and a purpose-built preview. Embedded JSON is parsed read-only; long text gets a reading surface; colors get a swatch; and date/timestamp values show useful alternate forms.
+Activate a badge to open the contextual inspector. When opened directly from the editor, it occupies a side column on a wide screen and becomes a bottom sheet below 880 px. When opened from Item Details, it replaces that panel's content and provides a route back to the same item. The inspector shows the path, raw JSON type, safe derived properties, copy actions, and a purpose-built preview. Embedded JSON is parsed read-only; long text gets a reading surface; colors get a swatch; and date/timestamp values show useful alternate forms.
 
 Remote media is **not requested when the document opens, the card expands, or the inspector opens**. The inspector shows the host and requires **Load preview** first. Only that action assigns the media URL to an image/video element, at which point the browser contacts the remote host. Embedded raster data is already part of the document and can be shown locally. SVG data images are not previewed. See [Privacy and local data](privacy-and-local-data.md#remote-media-opt-in) for the network and security details.
 
@@ -132,6 +134,6 @@ Outside of text fields: `Ctrl+Z` (`Cmd+Z` on macOS) for Undo, `Ctrl+Y` or `Ctrl+
 
 ## Responsive layout
 
-Below **760 px** wide, the table view's `<table>` is replaced by a stacked card layout that keeps the same typed, editable fields — no functionality is lost, only the visual arrangement changes. Below **880 px**, the contextual inspector becomes a bottom sheet. Deeply nested documents scroll independently of the page, and a wide table scrolls horizontally within its own container rather than the whole page.
+Below **760 px** wide, the table view's `<table>` is replaced by a stacked card layout that keeps the same typed, editable fields — no functionality is lost, only the visual arrangement changes. Below **880 px**, an inspector opened directly becomes a bottom sheet; an inspector opened from Item Details remains within that one details surface. Deeply nested documents scroll independently of the page, and a wide table scrolls horizontally within its own container rather than the whole page.
 
 The interface also supports a light and a dark theme, toggled from the header; your choice is remembered for your next visit (see [Privacy and local data](privacy-and-local-data.md#what-is-stored-and-where)).

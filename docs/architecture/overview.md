@@ -42,12 +42,13 @@ flowchart TD
     ValueEditor -->|recursive, one per nested value| ValueEditor
     ValueEditor --> TableCell[JsonTableCell]
     ValueEditor --> Details[JsonItemDetailsPanel]
+    Details -->|nested inspection replaces details content| Inspector
     ValueEditor --> Primitive[JsonPrimitiveEditor]
     Primitive --> Badge[SemanticBadge]
     Badge -->|selection only| Inspector
 ```
 
-`JsonValueEditor` is the only component that renders itself recursively: an object's properties and an array's items are each a nested `JsonValueEditor`, selected by the actual runtime type of the value at that path. This is what makes the editor generic — it never assumes a schema. Primitive editors ask the pure semantic detector for an optional interpretation and emit a selection request upward; `JsonDocumentEditor` owns the single inspector state, so recursive components never coordinate global panels themselves.
+`JsonValueEditor` is the only component that renders itself recursively: an object's properties and an array's items are each a nested `JsonValueEditor`, selected by the actual runtime type of the value at that path. This is what makes the editor generic — it never assumes a schema. Primitive editors ask the pure semantic detector for an optional interpretation. A direct request rises to the single inspector state in `JsonDocumentEditor`. When the request starts inside Item Details, `contextualSurface.ts` keeps the selected row and switches the existing details surface to embedded inspector content; returning restores the same row instead of mounting a second top-level panel. This UI-only state machine never emits a document operation.
 
 ## Technology choices
 

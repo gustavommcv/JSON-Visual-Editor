@@ -2,7 +2,8 @@
 import { computed, ref, watch } from 'vue'
 
 import type { JsonPath, JsonPrimitive, JsonRootKind } from '@/core/json/types'
-import SemanticBadge, { type SemanticInspectionRequest } from './SemanticBadge.vue'
+import type { SemanticInspectionRequest } from './contextualSurface'
+import SemanticBadge from './SemanticBadge.vue'
 
 const props = withDefaults(
   defineProps<{
